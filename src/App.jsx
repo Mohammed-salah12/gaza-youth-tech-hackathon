@@ -1,18 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import codeSproutsLogo from '../assets/code-sprouts-palestine-logo.jpeg'
-import techFromPalestineLogo from '../assets/tech-from-palestine-logo.jpeg'
+import techFromPalestineLogo from '../assets/tech-from-palestine-logo-highres.jpg'
+import hackathonLogo from '../assets/hackathon-logos/hackathon-logo-master.png'
 
 const routeStorageKey = 'gaza-youth-tech-hackathon-application'
+const submissionsStorageKey = 'gaza-youth-tech-hackathon-submissions'
 const languageStorageKey = 'gaza-youth-tech-hackathon-language'
 const defaultCategory = 'web'
+const defaultStage = 'idea'
+const defaultReviewStage = 'submitted'
+const techFromPalestineUrl = 'https://techfrompalestine.org/'
+const contactEmail = 'contact@techfrompalestine.org'
+const contactPhone = '+972597262318'
 
 const initialFormState = {
+  submissionId: '',
   fullName: '',
   age: '',
   city: '',
   school: '',
   projectName: '',
   category: defaultCategory,
+  projectStage: defaultStage,
   problem: '',
   description: '',
   recordingLink: '',
@@ -24,12 +33,21 @@ const content = {
     metaTitle: 'Gaza Youth Tech Hackathon',
     brandKicker: 'Tech From Palestine x Code Sprouts Palestine',
     brandTitle: 'Gaza Youth Tech Hackathon',
+    hackathonLogoAlt: 'Gaza Youth Tech Hackathon icon',
+    logoLockup: {
+      primary: 'HACKATHON',
+      primaryLang: 'en',
+      secondary: 'هاكاثون',
+      secondaryLang: 'ar',
+      tagline: 'Innovate today, build tomorrow',
+    },
     nav: {
       home: 'Home',
       tracks: 'Tracks',
       partners: 'Partners',
       faq: 'FAQ',
-      contact: 'Contact',
+      contact: 'Apply',
+      dashboard: 'Dashboard',
       apply: 'Apply Now',
     },
     languageSwitch: {
@@ -40,26 +58,26 @@ const content = {
       eyebrow: 'Youth innovation from Gaza',
       title: 'Build what Gaza needs next.',
       text:
-        'A youth-first hackathon for builders under 18. Share your project idea, add a short voice or video link, and show how your technology can solve real problems.',
+        'A youth-first hackathon for builders under 18. Bring your project idea, your technical spark, and a short voice or video pitch that explains why your idea matters.',
       primary: 'Start your application',
       secondary: 'Explore the hackathon',
       stats: [
         { value: 'Under 18', label: 'Youth-only eligibility' },
-        { value: 'Gaza', label: 'Local roots, big ambition' },
+        { value: 'Gaza', label: 'Local roots, real impact' },
         { value: '3 mins', label: 'Voice or video intro link' },
-        { value: 'Any tech', label: 'Software, robotics, hardware' },
+        { value: 'Any tech', label: 'Web, robotics, Arduino, mobile' },
       ],
-      panelBadges: ['Open call', 'Summer 2026'],
-      panelTitle: 'Idea to impact',
+      badges: ['Open call', 'Summer 2026'],
+      panelTitle: 'A youth stage with serious ambition',
       panelText:
-        'The stage is open for web builders, robotics teams, Arduino experimenters, mobile creators, and students with bold technical ideas.',
+        'The hackathon welcomes early ideas, prototypes, and bold concepts that use technology to solve community needs.',
+      pillars: ['Code', 'Robotics', 'Arduino', 'Community impact'],
+      quickList: [
+        'Submit a project idea or early prototype',
+        'Explain the problem and your solution clearly',
+        'Add one short recording link to support your story',
+      ],
     },
-    submissionSteps: [
-      'Share your project name and the problem you want to solve.',
-      'Choose your tech category, from robotics to mobile or web.',
-      'Explain how the idea helps people, students, families, or communities.',
-      'Add one link to a voice note or short video up to 3 minutes.',
-    ],
     about: {
       eyebrow: 'About the challenge',
       title: 'A launchpad for young builders with local ideas and technical courage',
@@ -77,6 +95,26 @@ const content = {
         {
           title: 'Built in Gaza',
           body: 'The event voice, examples, and challenge framing are rooted in Gaza and shaped by local creativity.',
+        },
+      ],
+    },
+    whyJoin: {
+      eyebrow: 'Why it matters',
+      title: 'More than a competition, this is a confidence-building platform',
+      body:
+        'The hackathon is designed to help young people in Gaza feel seen as builders, thinkers, and problem solvers.',
+      cards: [
+        {
+          title: 'Visibility for new talent',
+          body: 'Give young makers a public stage to present original technical ideas and show what they can build.',
+        },
+        {
+          title: 'Ideas connected to real needs',
+          body: 'Projects are encouraged to solve local challenges in learning, daily life, access, creativity, or community services.',
+        },
+        {
+          title: 'A stronger innovation culture',
+          body: 'The event helps nurture a new generation of students who see technology as a tool for service and change.',
         },
       ],
     },
@@ -108,11 +146,64 @@ const content = {
         },
       ],
     },
+    experience: {
+      eyebrow: 'What finalists gain',
+      title: 'A strong experience should build confidence, not just choose winners',
+      body:
+        'The hackathon story becomes stronger when participants can imagine what happens after they apply: feedback, visibility, and the chance to present something meaningful.',
+      cards: [
+        {
+          eyebrow: 'Pitch support',
+          title: 'Learn to tell the story behind the build',
+          body: 'Shortlisted participants can sharpen how they explain the problem, the solution, and the reason their project matters.',
+        },
+        {
+          eyebrow: 'Mentor energy',
+          title: 'Refine the idea with technical encouragement',
+          body: 'A young builder often needs one good conversation to make a project clearer, smarter, and more realistic to develop.',
+        },
+        {
+          eyebrow: 'Showcase moment',
+          title: 'Present the project with pride',
+          body: 'Finalists get a real stage to share what they made, what they learned, and what they want to build next.',
+        },
+      ],
+    },
     submit: {
-      eyebrow: 'What to submit',
+      eyebrow: 'Submission flow',
       title: 'A simple application that keeps the focus on the idea',
       body:
         'The submission flow stays lightweight so young participants can spend more time thinking and building, not fighting complicated forms.',
+      steps: [
+        'Introduce yourself and the project clearly.',
+        'Choose the category that best fits the idea.',
+        'Describe the problem, solution, and who benefits.',
+        'Attach a short recording link that tells the story with your own voice.',
+      ],
+    },
+    judging: {
+      eyebrow: 'What stands out',
+      title: 'What organizers and judges will care about most',
+      body:
+        'A strong project is not only technical. It also tells a clear story, serves a real need, and shows thoughtful effort.',
+      cards: [
+        {
+          title: 'Local relevance',
+          body: 'Does the idea respond to a real challenge, opportunity, or dream connected to life in Gaza?',
+        },
+        {
+          title: 'Clarity of thinking',
+          body: 'Can the participant explain the project simply, confidently, and with a clear sense of purpose?',
+        },
+        {
+          title: 'Technical promise',
+          body: 'Does the idea show technical curiosity, smart design, or an interesting build direction?',
+        },
+        {
+          title: 'Potential to grow',
+          body: 'Could this project become stronger with coaching, iteration, or more time to develop it?',
+        },
+      ],
     },
     timeline: {
       eyebrow: 'Journey',
@@ -145,6 +236,7 @@ const content = {
         {
           name: 'Tech From Palestine',
           logo: techFromPalestineLogo,
+          href: techFromPalestineUrl,
           body: 'Brings the sharp outward-facing Palestinian tech story: visibility, ambition, and the sense that local ideas deserve a global spotlight.',
         },
         {
@@ -182,52 +274,98 @@ const content = {
       eyebrow: 'Ready to take the next step?',
       title: 'Open the application page and shape your submission.',
       body:
-        'The form collects the project basics, the problem, and a recording link so applicants can present their ideas with clarity.',
+        'The application experience now guides the participant through categories, project stage, idea clarity, and the short supporting pitch link.',
       button: 'Go to contact and apply',
     },
     contactHero: {
-      eyebrow: 'Contact and apply',
-      title: "Prepare a young builder's submission in one place.",
+      eyebrow: 'Application journey',
+      title: "Prepare a young builder's submission with more clarity and confidence.",
       text:
-        'This page keeps the application journey simple: eligibility, project details, and a clean way to prepare a submission summary.',
-      primary: 'Jump to the form',
+        'This page helps applicants understand what to prepare, what makes an idea stand out, and how to turn early thoughts into a strong submission.',
+      primary: 'Jump to the application',
       secondary: 'Back to landing page',
-      sideEyebrow: 'Application journey',
-      sideTitle: 'A clear page for students, families, and mentors',
-      sideBody:
-        'Use this page to understand what the organizers need, prepare the idea clearly, and submit through the official channel when applications open.',
+      facts: [
+        { label: 'Accepted formats', value: 'Idea, prototype, or early build' },
+        { label: 'Pitch support', value: 'Voice or video link up to 3 minutes' },
+        { label: 'Audience', value: 'Students, parents, and mentors' },
+      ],
     },
-    contact: {
-      eyebrow: 'Get ready',
-      title: 'Everything applicants need before they submit',
+    prep: {
+      eyebrow: 'Before you apply',
+      title: 'Everything a strong application should prepare',
       body:
-        'Young makers can review the expectations, prepare a sharper idea, and organize the short recording that introduces their project.',
-      cards: [
-        {
-          title: 'Project clarity',
-          body: 'Help students explain the problem, the solution, and the value of the idea in a short and confident way.',
-        },
-        {
-          title: 'Recording support',
-          body: 'Applicants can prepare one short voice note or video link that tells the story of the project in under 3 minutes.',
-        },
-        {
-          title: 'Family-friendly process',
-          body: 'The page stays readable for students, parents, and mentors who may help organize the submission.',
-        },
+        'Great submissions do not need to be perfect. They need to be clear, honest, and full of potential.',
+      checklistTitle: 'Application checklist',
+      checklist: [
+        'A project name that feels clear and memorable',
+        'A simple explanation of the problem',
+        'A short description of how the idea works',
+        'A recording link that sounds personal and confident',
+      ],
+      standoutTitle: 'What makes a submission stronger',
+      standout: [
+        'Show why the project matters for people around you',
+        'Keep the explanation simple instead of overly technical',
+        'Use the recording to tell the story, not to repeat the form',
+      ],
+      eligibilityTitle: 'Quick eligibility view',
+      eligibility: [
+        'Designed for participants under 18',
+        'Open to youth based in Gaza',
+        'Technology projects across software and hardware are welcome',
       ],
     },
     form: {
       eyebrow: 'Application form',
       title: 'Submit your project idea',
       text:
-        'Fill in the details, add one recording link, and prepare a clean summary for the official submission channel.',
+        'Fill in the essentials, choose the right track, add your project stage, and prepare a clean submission summary.',
+      progressLabel: 'Application progress',
+      milestones: ['Your basics', 'Your idea', 'Your pitch'],
+      categories: [
+        {
+          id: 'web',
+          label: 'Website or web app',
+          description: 'Platforms, portals, learning sites, or service tools built for the web.',
+        },
+        {
+          id: 'mobile',
+          label: 'Mobile application',
+          description: 'Apps for Android, iPhone, or mobile-first community experiences.',
+        },
+        {
+          id: 'arduino',
+          label: 'Arduino or IoT',
+          description: 'Sensors, smart devices, automation, and real-world connected ideas.',
+        },
+        {
+          id: 'robotics',
+          label: 'Robotics',
+          description: 'Interactive machines, robotic systems, movement, control, or hardware logic.',
+        },
+        {
+          id: 'game',
+          label: 'Game or media experience',
+          description: 'Games, playful experiences, digital storytelling, or creative technology.',
+        },
+        {
+          id: 'other',
+          label: 'Other technology idea',
+          description: 'A strong technical idea that does not fit neatly into one track.',
+        },
+      ],
+      stages: [
+        { id: 'idea', label: 'Idea stage' },
+        { id: 'prototype', label: 'Prototype' },
+        { id: 'working', label: 'Working build' },
+      ],
       fields: {
         fullName: 'Full name',
         age: 'Age',
         city: 'City',
         school: 'School or club',
         projectName: 'Project name',
+        projectStage: 'Project stage',
         category: 'Category',
         problem: 'What problem are you solving?',
         description: 'Project idea',
@@ -245,22 +383,30 @@ const content = {
         recordingLink: 'https://...',
         contact: 'Email, phone number, or parent contact',
       },
-      categories: [
-        { id: 'web', label: 'Website or web app' },
-        { id: 'mobile', label: 'Mobile application' },
-        { id: 'arduino', label: 'Arduino or IoT' },
-        { id: 'robotics', label: 'Robotics' },
-        { id: 'game', label: 'Game or media experience' },
-        { id: 'other', label: 'Other technology idea' },
-      ],
+      helpers: {
+        problem: 'Try to describe the real-life issue in one or two simple sentences.',
+        description: 'You can explain the build, the user journey, the hardware setup, or what makes your idea different.',
+        recordingLink: 'The recording can be a voice note or a short video link. Keep it personal, short, and clear.',
+      },
       submit: 'Prepare my submission',
       reset: 'Clear form',
       resultEyebrow: 'Submission summary',
       resultTitle: 'A ready message for the official channel',
       resultText:
-        'Once the form is prepared, this panel becomes the version applicants can copy and share with the organizing team.',
+        'This panel turns the form into a clean summary the participant can copy when it is time to submit officially.',
       resultEmpty: 'No submission summary yet. Fill in the form and prepare it here.',
       copy: 'Copy summary',
+      snapshotTitle: 'Quick project snapshot',
+      snapshotEmpty: 'Still empty',
+      statusReady: 'Strong draft',
+      statusInProgress: 'In progress',
+      readinessTitle: 'Readiness checklist',
+      readinessItems: [
+        'Basic identity details are complete',
+        'The category and project stage are selected',
+        'The problem and idea are explained clearly',
+        'A voice or video pitch link is attached',
+      ],
       summaryTitle: 'Gaza Youth Tech Hackathon Submission',
       missingSchool: 'Not provided',
       summaryLabels: {
@@ -269,25 +415,115 @@ const content = {
         city: 'City',
         school: 'School or club',
         projectName: 'Project name',
+        projectStage: 'Project stage',
         category: 'Category',
         problem: 'Problem to solve',
         description: 'Project idea',
         recordingLink: 'Voice or video link',
         contact: 'Contact details',
       },
+      snapshotLabels: {
+        projectName: 'Project',
+        category: 'Track',
+        projectStage: 'Stage',
+        status: 'Status',
+      },
       feedback: {
         invalidAge: 'This hackathon is currently designed for participants under 18.',
-        prepared: 'Submission summary prepared. You can copy it and send it through the official event channel.',
+        prepared:
+          'Submission summary prepared and saved in the dashboard. You can copy it and share it through the official event channel.',
         copied: 'Submission summary copied to the clipboard.',
         blocked: 'Copy was blocked by the browser. You can still select the summary manually.',
         cleared: 'Form cleared.',
       },
     },
+    dashboard: {
+      eyebrow: 'Organizer dashboard',
+      title: 'Review applications, move them through stages, and keep the full story visible.',
+      text:
+        'This client-side dashboard helps the team read every response, track acceptance status, and keep notes while the official backend is still on the way.',
+      primary: 'Open the application form',
+      stats: {
+        total: 'Saved responses',
+        pending: 'Need review',
+        shortlisted: 'Shortlisted',
+        accepted: 'Accepted',
+      },
+      filtersTitle: 'Filter responses',
+      searchLabel: 'Search responses',
+      searchPlaceholder: 'Search by student, project, city, school, or contact',
+      allStages: 'All stages',
+      queueTitle: 'Response queue',
+      queueText: 'Select a response to open the full project story and update its acceptance stage.',
+      queueEmptyTitle: 'No responses match this filter yet',
+      queueEmptyText: 'Try another search term or switch to a different stage.',
+      emptyTitle: 'No submissions have been saved yet',
+      emptyText:
+        'Once an application is prepared from the form, it will appear here automatically on this device.',
+      detailEyebrow: 'Submission details',
+      detailTitle: 'Response details',
+      stageLabel: 'Acceptance stage',
+      projectStageLabel: 'Project stage',
+      submittedAt: 'Submitted',
+      updatedAt: 'Last updated',
+      openRecording: 'Open pitch link',
+      summaryTitle: 'Prepared summary',
+      copySummary: 'Copy summary',
+      notesTitle: 'Organizer notes',
+      notesPlaceholder:
+        'Write quick internal notes about promise, follow-up, concerns, or the next step.',
+      saveNotes: 'Save notes',
+      responsesTitle: 'Full response',
+      reviewStages: [
+        {
+          id: 'submitted',
+          label: 'New',
+          description: 'Recently prepared and waiting for first review.',
+        },
+        {
+          id: 'reviewing',
+          label: 'Reviewing',
+          description: 'Being checked for fit, clarity, and technical promise.',
+        },
+        {
+          id: 'shortlisted',
+          label: 'Shortlisted',
+          description: 'Strong enough for a second look or mentor follow-up.',
+        },
+        {
+          id: 'accepted',
+          label: 'Accepted',
+          description: 'Ready to move forward into the next round.',
+        },
+        {
+          id: 'waitlisted',
+          label: 'Waitlist',
+          description: 'A promising project waiting on final capacity.',
+        },
+        {
+          id: 'declined',
+          label: 'Not selected',
+          description: 'Not moving forward at this stage.',
+        },
+      ],
+      feedback: {
+        notesSaved: 'Organizer notes saved.',
+        copied: 'Summary copied to the clipboard.',
+        blocked: 'Copy was blocked by the browser. You can still copy the summary manually.',
+      },
+    },
     footer: {
       eyebrow: 'Gaza Youth Tech Hackathon',
       title: 'Built to spotlight young Palestinian technology talent.',
+      text:
+        'A youth hackathon shaped by Gaza, powered by partnership, and open to ideas that deserve a bigger stage.',
+      contactTitle: 'Contact',
+      contactText: 'Reach the organizing team for questions, support, or partnership follow-up.',
+      emailLabel: 'Email',
+      phoneLabel: 'Phone',
       home: 'Home',
       tracks: 'Tracks',
+      dashboard: 'Dashboard',
       apply: 'Apply',
     },
   },
@@ -295,12 +531,21 @@ const content = {
     metaTitle: 'هاكاثون غزة للتكنولوجيا للشباب',
     brandKicker: 'Tech From Palestine × Code Sprouts Palestine',
     brandTitle: 'هاكاثون غزة للتكنولوجيا للشباب',
+    hackathonLogoAlt: 'أيقونة هاكاثون غزة للتكنولوجيا للشباب',
+    logoLockup: {
+      primary: 'هاكاثون',
+      primaryLang: 'ar',
+      secondary: 'HACKATHON',
+      secondaryLang: 'en',
+      tagline: 'نبتكر اليوم، لنصنع الغد',
+    },
     nav: {
       home: 'الرئيسية',
       tracks: 'المجالات',
       partners: 'الشركاء',
       faq: 'الأسئلة',
       contact: 'التقديم',
+      dashboard: 'لوحة المتابعة',
       apply: 'قدّم الآن',
     },
     languageSwitch: {
@@ -311,26 +556,26 @@ const content = {
       eyebrow: 'ابتكار شبابي من غزة',
       title: 'ابنِ ما تحتاجه غزة في المرحلة القادمة.',
       text:
-        'هاكاثون مخصص للمبدعين تحت 18 سنة. شارك فكرة مشروعك، وأضف رابطًا لتسجيل صوتي أو فيديو قصير، وعرّفنا كيف يمكن لتقنيتك أن تحل مشكلة حقيقية.',
+        'هاكاثون مخصص للمبدعين تحت 18 سنة. احضر فكرتك، وشرارتك التقنية، وأضف رابطًا لتسجيل صوتي أو فيديو قصير يشرح لماذا تستحق فكرتك أن تُرى.',
       primary: 'ابدأ التقديم',
       secondary: 'اكتشف الهاكاثون',
       stats: [
         { value: 'أقل من 18', label: 'فئة شبابية فقط' },
-        { value: 'غزة', label: 'جذور محلية وطموح كبير' },
+        { value: 'غزة', label: 'جذور محلية وأثر حقيقي' },
         { value: '3 دقائق', label: 'رابط صوتي أو فيديو تعريفي' },
-        { value: 'أي تقنية', label: 'برمجيات وروبوت وعتاد' },
+        { value: 'أي تقنية', label: 'ويب وروبوت وأردوينو وموبايل' },
       ],
-      panelBadges: ['باب التقديم', 'صيف 2026'],
-      panelTitle: 'من الفكرة إلى الأثر',
+      badges: ['باب التقديم', 'صيف 2026'],
+      panelTitle: 'منصة شبابية بطموح جاد',
       panelText:
-        'المجال مفتوح لمطوري الويب، وفرق الروبوت، وتجارب الأردوينو، وصنّاع التطبيقات، وكل طالب لديه فكرة تقنية جريئة.',
+        'الهاكاثون يرحب بالأفكار المبكرة، والنماذج الأولية، والمشاريع الجريئة التي تستخدم التكنولوجيا لخدمة المجتمع.',
+      pillars: ['برمجة', 'روبوت', 'أردوينو', 'أثر مجتمعي'],
+      quickList: [
+        'قدّم فكرة مشروع أو نموذجًا أوليًا',
+        'اشرح المشكلة والحل بشكل واضح',
+        'أرفق رابط تسجيل قصير يدعم قصتك بصوتك',
+      ],
     },
-    submissionSteps: [
-      'شارك اسم مشروعك والمشكلة التي تريد حلها.',
-      'اختر المجال التقني المناسب، من الروبوت إلى تطبيقات الويب والموبايل.',
-      'اشرح كيف يمكن للفكرة أن تساعد الناس أو الطلاب أو العائلات أو المجتمع.',
-      'أضف رابطًا واحدًا لتسجيل صوتي أو فيديو قصير لا يتجاوز 3 دقائق.',
-    ],
     about: {
       eyebrow: 'عن التحدي',
       title: 'منصة انطلاق للشباب أصحاب الأفكار المحلية والجرأة التقنية',
@@ -348,6 +593,26 @@ const content = {
         {
           title: 'من غزة وإليها',
           body: 'لغة الحدث وأمثلته وروحه مستمدة من غزة ومن إبداع المجتمع المحلي.',
+        },
+      ],
+    },
+    whyJoin: {
+      eyebrow: 'لماذا هذا مهم؟',
+      title: 'ليس مجرد تنافس، بل مساحة تبني الثقة وتكشف المواهب',
+      body:
+        'الهاكاثون مصمم ليساعد الشباب في غزة على أن يُنظر إليهم كبنّائين ومفكرين وصنّاع حلول.',
+      cards: [
+        {
+          title: 'إبراز المواهب الجديدة',
+          body: 'يمنح المبدعين الصغار منصة حقيقية لعرض أفكارهم التقنية وإظهار ما يمكنهم بناؤه.',
+        },
+        {
+          title: 'أفكار مرتبطة بحاجات حقيقية',
+          body: 'يشجع المشاريع التي تخدم تحديات محلية في التعلم والحياة اليومية والوصول والخدمات والإبداع.',
+        },
+        {
+          title: 'بناء ثقافة ابتكار أقوى',
+          body: 'يساهم في تشكيل جيل جديد يرى التكنولوجيا أداة للخدمة والتغيير وليس مجرد مهارة تقنية.',
         },
       ],
     },
@@ -379,11 +644,64 @@ const content = {
         },
       ],
     },
+    experience: {
+      eyebrow: 'ماذا سيكسب المتأهلون؟',
+      title: 'التجربة القوية تبني الثقة ولا تكتفي باختيار الفائزين',
+      body:
+        'تصبح قصة الهاكاثون أقوى عندما يستطيع المشاركون تخيل ما بعد التقديم: ملاحظات، ظهور، وفرصة لعرض شيء يحمل معنى حقيقيًا.',
+      cards: [
+        {
+          eyebrow: 'دعم العرض',
+          title: 'تعلّم كيف تروي قصة المشروع',
+          body: 'يمكن للمشاركين المتأهلين صقل طريقة شرح المشكلة والحل ولماذا تستحق فكرتهم أن تُسمع.',
+        },
+        {
+          eyebrow: 'طاقة إرشادية',
+          title: 'طوّر الفكرة بدفعة تقنية مشجعة',
+          body: 'أحيانًا يحتاج المشارك الصغير إلى محادثة جيدة واحدة فقط ليجعل المشروع أوضح وأذكى وأكثر قابلية للتنفيذ.',
+        },
+        {
+          eyebrow: 'لحظة عرض',
+          title: 'قدّم المشروع بثقة وفخر',
+          body: 'يحصل المتأهلون على منصة حقيقية لعرض ما صنعوه وما تعلموه وما يريدون بناءه لاحقًا.',
+        },
+      ],
+    },
     submit: {
-      eyebrow: 'ماذا سترسل؟',
+      eyebrow: 'مسار التقديم',
       title: 'نموذج بسيط يبقي التركيز على الفكرة',
       body:
         'تم تصميم مسار التقديم ليكون خفيفًا حتى يقضي المشاركون وقتًا أكبر في التفكير والبناء بدلًا من النماذج المعقدة.',
+      steps: [
+        'عرّف بنفسك وبالمشروع بوضوح.',
+        'اختر المجال الأنسب للفكرة.',
+        'اشرح المشكلة والحل ومن سيستفيد.',
+        'أضف رابط تسجيل قصير يروي الفكرة بصوتك.',
+      ],
+    },
+    judging: {
+      eyebrow: 'ما الذي يلفت الانتباه؟',
+      title: 'ما الذي سيهتم به المنظمون ولجنة التقييم أكثر',
+      body:
+        'المشروع القوي ليس تقنيًا فقط. بل يروي قصة واضحة، ويخدم حاجة حقيقية، ويظهر جهدًا وفكرًا ناضجًا.',
+      cards: [
+        {
+          title: 'صلة بالمجتمع',
+          body: 'هل تستجيب الفكرة لتحدٍ حقيقي أو فرصة أو حلم مرتبط بالحياة في غزة؟',
+        },
+        {
+          title: 'وضوح الفكرة',
+          body: 'هل يستطيع المشارك شرح المشروع ببساطة وثقة وبهدف واضح؟',
+        },
+        {
+          title: 'وعد تقني',
+          body: 'هل تُظهر الفكرة فضولًا تقنيًا أو تصميمًا ذكيًا أو اتجاهًا مثيرًا للبناء؟',
+        },
+        {
+          title: 'قابلية للنمو',
+          body: 'هل يمكن أن يصبح المشروع أقوى مع الإرشاد والتطوير والمزيد من الوقت؟',
+        },
+      ],
     },
     timeline: {
       eyebrow: 'الرحلة',
@@ -416,6 +734,7 @@ const content = {
         {
           name: 'Tech From Palestine',
           logo: techFromPalestineLogo,
+          href: techFromPalestineUrl,
           body: 'تمنح المشروع حدة القصة التقنية الفلسطينية وطموحها، والشعور بأن الأفكار المحلية تستحق حضورًا عالميًا.',
         },
         {
@@ -451,54 +770,100 @@ const content = {
     },
     cta: {
       eyebrow: 'جاهز للخطوة التالية؟',
-      title: 'افتح صفحة التقديم وابدأ ترتيب فكرتك.',
+      title: 'افتح صفحة التقديم وابدأ بصياغة مشروعك بشكل أقوى.',
       body:
-        'النموذج يجمع أساسيات المشروع والمشكلة ورابط التسجيل حتى يتمكن المتقدم من عرض فكرته بشكل واضح ومقنع.',
+        'تجربة التقديم الآن تساعد المشارك على اختيار المجال ومرحلة المشروع وشرح الفكرة وإضافة رابط التسجيل بشكل أوضح.',
       button: 'اذهب إلى صفحة التقديم',
     },
     contactHero: {
-      eyebrow: 'التواصل والتقديم',
-      title: 'جهّز طلب المشارك الصغير في مكان واحد.',
+      eyebrow: 'رحلة التقديم',
+      title: 'جهّز طلب المشارك الصغير بمزيد من الوضوح والثقة.',
       text:
-        'هذه الصفحة تجعل رحلة التقديم أسهل: شروط الأهلية، تفاصيل المشروع، وطريقة واضحة لتحضير ملخص جاهز للإرسال.',
+        'هذه الصفحة تساعد المتقدم على معرفة ما يجب تحضيره، وما الذي يجعل الفكرة أقوى، وكيف يحول الفكرة الأولية إلى تقديم منظم.',
       primary: 'اذهب إلى النموذج',
       secondary: 'العودة إلى الرئيسية',
-      sideEyebrow: 'رحلة التقديم',
-      sideTitle: 'صفحة واضحة للطلاب والعائلات والمرشدين',
-      sideBody:
-        'استخدم هذه الصفحة لفهم المطلوب من المنظمين، وصياغة الفكرة بشكل أوضح، وتجهيزها للإرسال عبر القناة الرسمية عند فتح التقديم.',
+      facts: [
+        { label: 'نوع التقديم', value: 'فكرة أو نموذج أولي أو بناء مبكر' },
+        { label: 'دعم العرض', value: 'رابط صوتي أو فيديو حتى 3 دقائق' },
+        { label: 'المستفيد', value: 'الطلاب والأهل والمرشدون' },
+      ],
     },
-    contact: {
-      eyebrow: 'استعد جيدًا',
-      title: 'كل ما يحتاجه المتقدم قبل الإرسال',
+    prep: {
+      eyebrow: 'قبل أن تبدأ',
+      title: 'كل ما يحتاجه التقديم القوي',
       body:
-        'يمكن للمشاركين مراجعة التوقعات، وصقل فكرتهم، وتنظيم التسجيل القصير الذي يقدّم المشروع بطريقة قوية.',
-      cards: [
-        {
-          title: 'وضوح الفكرة',
-          body: 'ساعد الطلاب على شرح المشكلة والحل وقيمة الفكرة بشكل قصير وواثق.',
-        },
-        {
-          title: 'دعم التسجيل',
-          body: 'يمكن للمتقدم تجهيز تسجيل صوتي أو فيديو قصير يروي قصة المشروع خلال أقل من 3 دقائق.',
-        },
-        {
-          title: 'مسار مناسب للعائلة',
-          body: 'الصفحة مكتوبة بطريقة سهلة للطلاب والأهل والمرشدين الذين قد يساعدون في تنظيم التقديم.',
-        },
+        'لا يشترط أن يكون التقديم كاملًا أو مثاليًا. المهم أن يكون واضحًا وصادقًا ومليئًا بالإمكانات.',
+      checklistTitle: 'قائمة التقديم',
+      checklist: [
+        'اسم مشروع واضح وسهل التذكر',
+        'شرح بسيط للمشكلة',
+        'وصف مختصر لكيفية عمل الفكرة',
+        'رابط تسجيل قصير بصوت شخصي وواثق',
+      ],
+      standoutTitle: 'ما الذي يقوّي التقديم؟',
+      standout: [
+        'بيّن لماذا يهم المشروع الناس من حولك',
+        'اجعل الشرح بسيطًا بدلًا من أن يكون تقنيًا أكثر من اللازم',
+        'استخدم التسجيل ليروي القصة بدل أن يكرر ما كُتب في النموذج',
+      ],
+      eligibilityTitle: 'نظرة سريعة على الأهلية',
+      eligibility: [
+        'مصمم للمشاركين تحت 18 سنة',
+        'مفتوح للشباب في غزة',
+        'يرحب بالمشاريع التقنية في البرمجيات والعتاد',
       ],
     },
     form: {
       eyebrow: 'نموذج التقديم',
       title: 'قدّم فكرة مشروعك',
       text:
-        'املأ التفاصيل، وأضف رابط تسجيل واحد، وجهّز ملخصًا واضحًا لإرساله عبر قناة التقديم الرسمية.',
+        'املأ الأساسيات، واختر المسار المناسب، وحدد مرحلة مشروعك، ثم جهّز ملخصًا واضحًا يمكن استخدامه في التقديم الرسمي.',
+      progressLabel: 'تقدّم التقديم',
+      milestones: ['بياناتك', 'فكرتك', 'عرضك القصير'],
+      categories: [
+        {
+          id: 'web',
+          label: 'موقع أو تطبيق ويب',
+          description: 'منصات ومواقع تعليمية وخدمات وأدوات رقمية تعمل عبر الويب.',
+        },
+        {
+          id: 'mobile',
+          label: 'تطبيق موبايل',
+          description: 'تطبيقات للهواتف أو تجارب رقمية مصممة لاستخدام الهاتف أولًا.',
+        },
+        {
+          id: 'arduino',
+          label: 'أردوينو أو إنترنت الأشياء',
+          description: 'حساسات وأجهزة ذكية وأتمتة وأفكار متصلة بالعالم الحقيقي.',
+        },
+        {
+          id: 'robotics',
+          label: 'روبوتات',
+          description: 'أنظمة حركية وروبوتية وتفاعلية تعتمد على التحكم أو العتاد.',
+        },
+        {
+          id: 'game',
+          label: 'لعبة أو تجربة إعلامية',
+          description: 'ألعاب أو تجارب تفاعلية أو سرد رقمي أو استخدام إبداعي للتكنولوجيا.',
+        },
+        {
+          id: 'other',
+          label: 'فكرة تقنية أخرى',
+          description: 'فكرة تقنية قوية لا تنتمي بوضوح إلى مسار واحد محدد.',
+        },
+      ],
+      stages: [
+        { id: 'idea', label: 'مرحلة الفكرة' },
+        { id: 'prototype', label: 'نموذج أولي' },
+        { id: 'working', label: 'نسخة تعمل' },
+      ],
       fields: {
         fullName: 'الاسم الكامل',
         age: 'العمر',
         city: 'المدينة',
         school: 'المدرسة أو النادي',
         projectName: 'اسم المشروع',
+        projectStage: 'مرحلة المشروع',
         category: 'المجال',
         problem: 'ما المشكلة التي تحاول حلها؟',
         description: 'فكرة المشروع',
@@ -516,22 +881,30 @@ const content = {
         recordingLink: 'https://...',
         contact: 'إيميل أو رقم هاتف أو وسيلة تواصل مع ولي الأمر',
       },
-      categories: [
-        { id: 'web', label: 'موقع أو تطبيق ويب' },
-        { id: 'mobile', label: 'تطبيق موبايل' },
-        { id: 'arduino', label: 'أردوينو أو إنترنت الأشياء' },
-        { id: 'robotics', label: 'روبوتات' },
-        { id: 'game', label: 'لعبة أو تجربة إعلامية' },
-        { id: 'other', label: 'فكرة تقنية أخرى' },
-      ],
+      helpers: {
+        problem: 'حاول وصف المشكلة الواقعية في جملة أو جملتين بسيطتين.',
+        description: 'يمكنك شرح البناء أو الرحلة أو العتاد أو ما الذي يجعل فكرتك مختلفة.',
+        recordingLink: 'يمكن أن يكون التسجيل صوتيًا أو فيديو قصيرًا. اجعله شخصيًا وواضحًا ومباشرًا.',
+      },
       submit: 'جهّز طلبي',
       reset: 'مسح النموذج',
       resultEyebrow: 'ملخص التقديم',
       resultTitle: 'رسالة جاهزة للقناة الرسمية',
       resultText:
-        'بعد تجهيز النموذج، يصبح هذا القسم نسخة يمكن للمتقدم نسخها ومشاركتها مع فريق التنظيم.',
+        'هذا القسم يحول النموذج إلى ملخص واضح يمكن للمتقدم نسخه عندما يحين وقت التقديم الرسمي.',
       resultEmpty: 'لا يوجد ملخص بعد. املأ النموذج وجهّزه هنا.',
       copy: 'نسخ الملخص',
+      snapshotTitle: 'ملخص سريع للمشروع',
+      snapshotEmpty: 'لم يُكتب بعد',
+      statusReady: 'مسودة قوية',
+      statusInProgress: 'قيد التجهيز',
+      readinessTitle: 'قائمة الجاهزية',
+      readinessItems: [
+        'البيانات الأساسية مكتملة',
+        'تم اختيار المجال ومرحلة المشروع',
+        'المشكلة والفكرة مشروحتان بوضوح',
+        'تم إرفاق رابط العرض الصوتي أو المرئي',
+      ],
       summaryTitle: 'تقديم هاكاثون غزة للتكنولوجيا للشباب',
       missingSchool: 'غير مذكور',
       summaryLabels: {
@@ -540,28 +913,204 @@ const content = {
         city: 'المدينة',
         school: 'المدرسة أو النادي',
         projectName: 'اسم المشروع',
+        projectStage: 'مرحلة المشروع',
         category: 'المجال',
         problem: 'المشكلة التي يحاول حلها',
         description: 'فكرة المشروع',
         recordingLink: 'رابط الصوت أو الفيديو',
         contact: 'بيانات التواصل',
       },
+      snapshotLabels: {
+        projectName: 'المشروع',
+        category: 'المجال',
+        projectStage: 'المرحلة',
+        status: 'الحالة',
+      },
       feedback: {
         invalidAge: 'هذا الهاكاثون مخصص حاليًا للمشاركين تحت 18 سنة.',
-        prepared: 'تم تجهيز ملخص التقديم. يمكنك نسخه وإرساله عبر القناة الرسمية للحدث.',
+        prepared:
+          'تم تجهيز ملخص التقديم وحفظه في لوحة المتابعة. يمكنك نسخه ومشاركته عبر القناة الرسمية للحدث.',
         copied: 'تم نسخ ملخص التقديم إلى الحافظة.',
         blocked: 'تعذّر النسخ من المتصفح. ما زال بإمكانك تحديد الملخص ونسخه يدويًا.',
         cleared: 'تم مسح النموذج.',
       },
     },
+    dashboard: {
+      eyebrow: 'لوحة المنظمين',
+      title: 'راجع الطلبات، حرّكها بين المراحل، وابقِ القصة الكاملة واضحة أمامك.',
+      text:
+        'هذه اللوحة تعمل محليًا في المتصفح حاليًا، وتساعد الفريق على قراءة الردود، تتبع مراحل القبول، وتسجيل الملاحظات إلى أن تصبح المنصة الخلفية جاهزة.',
+      primary: 'افتح نموذج التقديم',
+      stats: {
+        total: 'الردود المحفوظة',
+        pending: 'تحتاج مراجعة',
+        shortlisted: 'قائمة مختصرة',
+        accepted: 'تم قبولهم',
+      },
+      filtersTitle: 'فلترة الطلبات',
+      searchLabel: 'ابحث في الردود',
+      searchPlaceholder: 'ابحث بالاسم أو المشروع أو المدينة أو المدرسة أو وسيلة التواصل',
+      allStages: 'كل المراحل',
+      queueTitle: 'قائمة الردود',
+      queueText: 'اختر أي رد لقراءة تفاصيل المشروع كاملة وتحديث مرحلة قبوله.',
+      queueEmptyTitle: 'لا توجد ردود تطابق هذا الفلتر حاليًا',
+      queueEmptyText: 'جرّب كلمة بحث أخرى أو بدّل مرحلة القبول.',
+      emptyTitle: 'لم يتم حفظ أي طلبات بعد',
+      emptyText: 'بمجرد تجهيز طلب من النموذج سيظهر هنا تلقائيًا على هذا الجهاز.',
+      detailEyebrow: 'تفاصيل الطلب',
+      detailTitle: 'محتوى الرد',
+      stageLabel: 'مرحلة القبول',
+      projectStageLabel: 'مرحلة المشروع',
+      submittedAt: 'تاريخ التقديم',
+      updatedAt: 'آخر تحديث',
+      openRecording: 'افتح رابط العرض',
+      summaryTitle: 'الملخص الجاهز',
+      copySummary: 'نسخ الملخص',
+      notesTitle: 'ملاحظات المنظمين',
+      notesPlaceholder: 'اكتب ملاحظات داخلية سريعة عن قوة الفكرة أو المتابعة أو المخاوف أو الخطوة القادمة.',
+      saveNotes: 'حفظ الملاحظات',
+      responsesTitle: 'الرد الكامل',
+      reviewStages: [
+        {
+          id: 'submitted',
+          label: 'جديد',
+          description: 'تم تجهيزه مؤخرًا وينتظر المراجعة الأولى.',
+        },
+        {
+          id: 'reviewing',
+          label: 'قيد المراجعة',
+          description: 'يتم فحصه من حيث الملاءمة والوضوح والوعد التقني.',
+        },
+        {
+          id: 'shortlisted',
+          label: 'قائمة مختصرة',
+          description: 'فكرة قوية تستحق نظرة ثانية أو متابعة إرشادية.',
+        },
+        {
+          id: 'accepted',
+          label: 'مقبول',
+          description: 'جاهز للانتقال إلى المرحلة التالية.',
+        },
+        {
+          id: 'waitlisted',
+          label: 'قائمة انتظار',
+          description: 'مشروع واعد ينتظر الحسم حسب السعة المتاحة.',
+        },
+        {
+          id: 'declined',
+          label: 'غير مختار',
+          description: 'لن ينتقل إلى المرحلة التالية حاليًا.',
+        },
+      ],
+      feedback: {
+        notesSaved: 'تم حفظ ملاحظات المنظمين.',
+        copied: 'تم نسخ الملخص إلى الحافظة.',
+        blocked: 'تعذّر النسخ من المتصفح. ما زال بإمكانك نسخ الملخص يدويًا.',
+      },
+    },
     footer: {
       eyebrow: 'هاكاثون غزة للتكنولوجيا للشباب',
       title: 'مساحة تبرز المواهب التقنية الشابة في فلسطين.',
+      text:
+        'هاكاثون شبابي تنطلق قصته من غزة، وتدعمه الشراكة، ويمنح الأفكار التي تستحق فرصة مساحة أكبر للظهور.',
+      contactTitle: 'تواصل معنا',
+      contactText: 'تواصل مع فريق التنظيم لأي سؤال أو دعم أو متابعة متعلقة بالشراكة.',
+      emailLabel: 'البريد الإلكتروني',
+      phoneLabel: 'رقم الهاتف',
       home: 'الرئيسية',
       tracks: 'المجالات',
+      dashboard: 'اللوحة',
       apply: 'قدّم',
     },
   },
+}
+
+function readStoredJson(key, fallback) {
+  const rawValue = window.localStorage.getItem(key)
+
+  if (!rawValue) {
+    return fallback
+  }
+
+  try {
+    return JSON.parse(rawValue)
+  } catch {
+    return fallback
+  }
+}
+
+function getStoredSubmissions() {
+  const savedSubmissions = readStoredJson(submissionsStorageKey, [])
+
+  if (!Array.isArray(savedSubmissions)) {
+    return []
+  }
+
+  return savedSubmissions
+    .map((item) => ({
+      reviewStage: defaultReviewStage,
+      organizerNotes: '',
+      ...item,
+    }))
+    .sort((left, right) => {
+      const leftTime = new Date(left.updatedAt || left.createdAt || 0).getTime()
+      const rightTime = new Date(right.updatedAt || right.createdAt || 0).getTime()
+      return rightTime - leftTime
+    })
+}
+
+function saveStoredSubmissions(submissions) {
+  window.localStorage.setItem(submissionsStorageKey, JSON.stringify(submissions))
+}
+
+function createSubmissionId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  return `submission-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+function buildSubmissionSummary(formState, formContent, categoriesById, stagesById) {
+  return [
+    formContent.summaryTitle,
+    '',
+    `${formContent.summaryLabels.fullName}: ${formState.fullName}`,
+    `${formContent.summaryLabels.age}: ${formState.age}`,
+    `${formContent.summaryLabels.city}: ${formState.city}`,
+    `${formContent.summaryLabels.school}: ${formState.school || formContent.missingSchool}`,
+    `${formContent.summaryLabels.projectName}: ${formState.projectName}`,
+    `${formContent.summaryLabels.projectStage}: ${
+      stagesById[formState.projectStage] || formState.projectStage
+    }`,
+    `${formContent.summaryLabels.category}: ${
+      categoriesById[formState.category] || formState.category
+    }`,
+    `${formContent.summaryLabels.problem}: ${formState.problem}`,
+    '',
+    `${formContent.summaryLabels.description}:`,
+    formState.description,
+    '',
+    `${formContent.summaryLabels.recordingLink}: ${formState.recordingLink}`,
+    `${formContent.summaryLabels.contact}: ${formState.contact}`,
+  ].join('\n')
+}
+
+function formatSubmissionDate(dateValue, language) {
+  if (!dateValue) {
+    return '—'
+  }
+
+  const date = new Date(dateValue)
+
+  if (Number.isNaN(date.getTime())) {
+    return '—'
+  }
+
+  return new Intl.DateTimeFormat(language === 'ar' ? 'ar' : 'en', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date)
 }
 
 function parseHash() {
@@ -574,7 +1123,7 @@ function parseHash() {
   const [page, section = ''] = rawHash.split(':')
 
   return {
-    page: page === 'contact' ? 'contact' : 'home',
+    page: ['home', 'contact', 'dashboard'].includes(page) ? page : 'home',
     section,
   }
 }
@@ -613,6 +1162,10 @@ function buildLanguageHref(nextLanguage) {
   return `?lang=${nextLanguage}${hash}`
 }
 
+function isFilled(value) {
+  return String(value ?? '').trim().length > 0
+}
+
 function App() {
   const [route, setCurrentRoute] = useState(() => parseHash())
   const [menuOpen, setMenuOpen] = useState(false)
@@ -626,8 +1179,7 @@ function App() {
     const currentHash = window.location.hash.replace('#', '')
 
     if (currentHash === nextHash) {
-      const nextRoute = { page, section }
-      setCurrentRoute(nextRoute)
+      setCurrentRoute({ page, section })
       setMenuOpen(false)
       scrollToRoute(section)
       return
@@ -678,6 +1230,8 @@ function App() {
       <main>
         {route.page === 'home' ? (
           <HomePage content={pageContent} onNavigate={handleNavigate} />
+        ) : route.page === 'dashboard' ? (
+          <DashboardPage content={pageContent} language={language} onNavigate={handleNavigate} />
         ) : (
           <ContactPage content={pageContent} onNavigate={handleNavigate} />
         )}
@@ -702,26 +1256,38 @@ function SiteHeader({
     { label: content.nav.partners, page: 'home', section: 'partners' },
     { label: content.nav.faq, page: 'home', section: 'faq' },
     { label: content.nav.contact, page: 'contact', section: '' },
+    { label: content.nav.dashboard, page: 'dashboard', section: '' },
   ]
 
   return (
     <header className="site-header">
       <div className="container nav-bar">
-        <button
-          type="button"
-          className="brand"
-          onClick={() => onNavigate('home')}
-          aria-label={content.nav.home}
-        >
-          <div className="brand-logos">
-            <img src={codeSproutsLogo} alt="Code Sprouts Palestine logo" />
-            <img src={techFromPalestineLogo} alt="Tech From Palestine logo" />
+        <div className="brand">
+          <div className="brand-stack">
+            <button
+              type="button"
+              className="brand-home"
+              onClick={() => onNavigate('home')}
+              aria-label={content.nav.home}
+            >
+              <div className="brand-copy">
+                <span className="brand-kicker">{content.brandKicker}</span>
+                <strong>{content.brandTitle}</strong>
+              </div>
+            </button>
+
+            <div className="brand-logos">
+              <img src={codeSproutsLogo} alt="Code Sprouts Palestine logo" />
+              <a
+                className="logo-link logo-link--tfp"
+                href={techFromPalestineUrl}
+                aria-label="Visit Tech From Palestine"
+              >
+                <img src={techFromPalestineLogo} alt="Tech From Palestine logo" />
+              </a>
+            </div>
           </div>
-          <div className="brand-copy">
-            <span className="brand-kicker">{content.brandKicker}</span>
-            <strong>{content.brandTitle}</strong>
-          </div>
-        </button>
+        </div>
 
         <div className="header-actions">
           <div className="language-switcher" aria-label="Language switcher">
@@ -807,7 +1373,7 @@ function HomePage({ content, onNavigate }) {
               <button
                 type="button"
                 className="secondary-button"
-                onClick={() => onNavigate('home', 'about')}
+                onClick={() => onNavigate('home', 'tracks')}
               >
                 {content.hero.secondary}
               </button>
@@ -821,29 +1387,36 @@ function HomePage({ content, onNavigate }) {
           </div>
 
           <div className="hero-panel">
-            <div className="orbit-card">
-              <div className="orbit-grid" />
+            <div className="hero-logo-card">
               <div className="orbit-topline">
-                <span className="tiny-badge">{content.hero.panelBadges[0]}</span>
-                <span className="tiny-badge tiny-badge--warm">{content.hero.panelBadges[1]}</span>
+                <span className="tiny-badge">{content.hero.badges[0]}</span>
+                <span className="tiny-badge tiny-badge--warm">{content.hero.badges[1]}</span>
               </div>
+
+              <HackathonLockup content={content} variant="hero" />
 
               <h2>{content.hero.panelTitle}</h2>
               <p>{content.hero.panelText}</p>
 
-              <ul className="submission-list">
-                {content.submissionSteps.map((step) => (
-                  <li key={step}>{step}</li>
+              <div className="pillar-grid">
+                {content.hero.pillars.map((pillar) => (
+                  <span key={pillar} className="pillar-chip">
+                    {pillar}
+                  </span>
                 ))}
-              </ul>
+              </div>
             </div>
 
             <div className="logo-float logo-float--left">
               <img src={codeSproutsLogo} alt="Code Sprouts Palestine logo" />
             </div>
-            <div className="logo-float logo-float--right">
+            <a
+              className="logo-float logo-float--right logo-link logo-link--tfp-float"
+              href={techFromPalestineUrl}
+              aria-label="Visit Tech From Palestine"
+            >
               <img src={techFromPalestineLogo} alt="Tech From Palestine logo" />
-            </div>
+            </a>
           </div>
         </div>
       </section>
@@ -864,7 +1437,23 @@ function HomePage({ content, onNavigate }) {
         </div>
       </section>
 
-      <section className="section section--tinted" id="tracks">
+      <section className="section section--tinted">
+        <div className="container">
+          <SectionTitle
+            eyebrow={content.whyJoin.eyebrow}
+            title={content.whyJoin.title}
+            body={content.whyJoin.body}
+          />
+
+          <div className="feature-grid">
+            {content.whyJoin.cards.map((card) => (
+              <FeatureCard key={card.title} title={card.title} body={card.body} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section section--soft" id="tracks">
         <div className="container">
           <SectionTitle
             eyebrow={content.tracks.eyebrow}
@@ -884,6 +1473,26 @@ function HomePage({ content, onNavigate }) {
         </div>
       </section>
 
+      <section className="section section--tinted">
+        <div className="container">
+          <SectionTitle
+            eyebrow={content.experience.eyebrow}
+            title={content.experience.title}
+            body={content.experience.body}
+          />
+
+          <div className="showcase-grid">
+            {content.experience.cards.map((item) => (
+              <article key={item.title} className="feature-card feature-card--showcase">
+                <span className="card-eyebrow">{item.eyebrow}</span>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="section">
         <div className="container story-layout">
           <div>
@@ -895,7 +1504,7 @@ function HomePage({ content, onNavigate }) {
           </div>
 
           <div className="steps-card">
-            {content.submissionSteps.map((step, index) => (
+            {content.submit.steps.map((step, index) => (
               <div key={step} className="step-row">
                 <span>{String(index + 1).padStart(2, '0')}</span>
                 <p>{step}</p>
@@ -908,16 +1517,35 @@ function HomePage({ content, onNavigate }) {
       <section className="section section--dark">
         <div className="container">
           <SectionTitle
+            eyebrow={content.judging.eyebrow}
+            title={content.judging.title}
+            body={content.judging.body}
+            inverted
+          />
+
+          <div className="timeline-grid judging-grid">
+            {content.judging.cards.map((item) => (
+              <article key={item.title} className="timeline-card">
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
+          <SectionTitle
             eyebrow={content.timeline.eyebrow}
             title={content.timeline.title}
             body={content.timeline.body}
-            inverted
           />
 
           <div className="timeline-grid">
             {content.timeline.cards.map((item) => (
-              <article key={item.title} className="timeline-card">
-                <span className="card-eyebrow card-eyebrow--bright">{item.phase}</span>
+              <article key={item.title} className="timeline-card timeline-card--light">
+                <span className="card-eyebrow">{item.phase}</span>
                 <h3>{item.title}</h3>
                 <p>{item.body}</p>
               </article>
@@ -937,7 +1565,17 @@ function HomePage({ content, onNavigate }) {
           <div className="partner-grid">
             {content.partners.cards.map((partner) => (
               <article key={partner.name} className="partner-card">
-                <img src={partner.logo} alt={`${partner.name} logo`} />
+                {partner.href ? (
+                  <a
+                    className="logo-link logo-link--partner"
+                    href={partner.href}
+                    aria-label={`Visit ${partner.name}`}
+                  >
+                    <img src={partner.logo} alt={`${partner.name} logo`} />
+                  </a>
+                ) : (
+                  <img src={partner.logo} alt={`${partner.name} logo`} />
+                )}
                 <div>
                   <h3>{partner.name}</h3>
                   <p>{partner.body}</p>
@@ -975,13 +1613,16 @@ function HomePage({ content, onNavigate }) {
             <p>{content.cta.body}</p>
           </div>
 
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => onNavigate('contact', 'apply')}
-          >
-            {content.cta.button}
-          </button>
+          <div className="cta-logo-wrap">
+            <HackathonLockup content={content} variant="compact" />
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => onNavigate('contact', 'apply')}
+            >
+              {content.cta.button}
+            </button>
+          </div>
         </div>
       </section>
     </>
@@ -1016,34 +1657,521 @@ function ContactPage({ content, onNavigate }) {
             </div>
           </div>
 
-          <div className="contact-side-card">
-            <span className="card-eyebrow">{content.contactHero.sideEyebrow}</span>
-            <h2>{content.contactHero.sideTitle}</h2>
-            <p>{content.contactHero.sideBody}</p>
+          <div className="contact-brand-card">
+            <HackathonLockup content={content} variant="section" />
+            <div className="fact-grid">
+              {content.contactHero.facts.map((fact) => (
+                <div key={fact.label} className="fact-chip">
+                  <strong>{fact.label}</strong>
+                  <span>{fact.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       <section className="section" id="apply">
-        <div className="container contact-layout">
-          <div className="contact-column">
+        <div className="container application-hub">
+          <aside className="prep-panel">
             <SectionTitle
-              eyebrow={content.contact.eyebrow}
-              title={content.contact.title}
-              body={content.contact.body}
+              eyebrow={content.prep.eyebrow}
+              title={content.prep.title}
+              body={content.prep.body}
             />
 
-            <div className="contact-card-list">
-              {content.contact.cards.map((card) => (
-                <article key={card.title} className="contact-card">
-                  <h3>{card.title}</h3>
-                  <p>{card.body}</p>
+            <article className="prep-card">
+              <h3>{content.prep.checklistTitle}</h3>
+              <ul className="prep-list">
+                {content.prep.checklist.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="prep-card">
+              <h3>{content.prep.standoutTitle}</h3>
+              <ul className="prep-list">
+                {content.prep.standout.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="prep-card prep-card--accent">
+              <h3>{content.prep.eligibilityTitle}</h3>
+              <ul className="prep-list">
+                {content.prep.eligibility.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+          </aside>
+
+          <div className="application-column">
+            <div className="contact-card-list contact-card-list--wide">
+              {content.submit.steps.map((step, index) => (
+                <article key={step} className="contact-card contact-card--numbered">
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <p>{step}</p>
                 </article>
               ))}
             </div>
+
+            <ApplicationForm content={content} />
+          </div>
+        </div>
+      </section>
+    </>
+  )
+}
+
+function DashboardPage({ content, language, onNavigate }) {
+  const [submissions, setSubmissions] = useState(() => getStoredSubmissions())
+  const [selectedId, setSelectedId] = useState(() => getStoredSubmissions()[0]?.id || '')
+  const [stageFilter, setStageFilter] = useState('all')
+  const [searchValue, setSearchValue] = useState('')
+  const [notesDraft, setNotesDraft] = useState('')
+  const [feedback, setFeedback] = useState('')
+
+  const categoriesById = useMemo(
+    () => Object.fromEntries(content.form.categories.map((item) => [item.id, item.label])),
+    [content.form.categories],
+  )
+  const projectStagesById = useMemo(
+    () => Object.fromEntries(content.form.stages.map((item) => [item.id, item.label])),
+    [content.form.stages],
+  )
+  const reviewStagesById = useMemo(
+    () =>
+      Object.fromEntries(content.dashboard.reviewStages.map((item) => [item.id, item.label])),
+    [content.dashboard.reviewStages],
+  )
+
+  useEffect(() => {
+    const syncSubmissions = () => {
+      setSubmissions(getStoredSubmissions())
+    }
+
+    window.addEventListener('storage', syncSubmissions)
+    window.addEventListener('focus', syncSubmissions)
+
+    return () => {
+      window.removeEventListener('storage', syncSubmissions)
+      window.removeEventListener('focus', syncSubmissions)
+    }
+  }, [])
+
+  const filteredSubmissions = useMemo(() => {
+    const normalizedSearch = searchValue.trim().toLowerCase()
+
+    return submissions.filter((submission) => {
+      const matchesStage =
+        stageFilter === 'all' || submission.reviewStage === stageFilter
+
+      if (!matchesStage) {
+        return false
+      }
+
+      if (!normalizedSearch) {
+        return true
+      }
+
+      return [
+        submission.fullName,
+        submission.projectName,
+        submission.city,
+        submission.school,
+        submission.contact,
+        categoriesById[submission.category] || '',
+      ].some((value) => String(value || '').toLowerCase().includes(normalizedSearch))
+    })
+  }, [categoriesById, searchValue, stageFilter, submissions])
+
+  useEffect(() => {
+    if (!selectedId && filteredSubmissions[0]) {
+      setSelectedId(filteredSubmissions[0].id)
+      return
+    }
+
+    if (
+      filteredSubmissions.length > 0 &&
+      !filteredSubmissions.some((submission) => submission.id === selectedId)
+    ) {
+      setSelectedId(filteredSubmissions[0].id)
+    }
+  }, [filteredSubmissions, selectedId])
+
+  const selectedSubmission =
+    filteredSubmissions.find((submission) => submission.id === selectedId) ||
+    filteredSubmissions[0] ||
+    null
+
+  useEffect(() => {
+    setNotesDraft(selectedSubmission?.organizerNotes || '')
+    setFeedback('')
+  }, [selectedSubmission?.id])
+
+  const persistSubmissions = (updater) => {
+    setSubmissions((current) => {
+      const nextSubmissions =
+        typeof updater === 'function' ? updater(current) : updater
+
+      saveStoredSubmissions(nextSubmissions)
+      return nextSubmissions
+    })
+  }
+
+  const handleStageChange = (submissionId, reviewStage) => {
+    persistSubmissions((current) =>
+      current
+        .map((submission) =>
+          submission.id === submissionId
+            ? {
+                ...submission,
+                reviewStage,
+                updatedAt: new Date().toISOString(),
+              }
+            : submission,
+        )
+        .sort(
+          (left, right) =>
+            new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime(),
+        ),
+    )
+  }
+
+  const handleSaveNotes = () => {
+    if (!selectedSubmission) {
+      return
+    }
+
+    persistSubmissions((current) =>
+      current
+        .map((submission) =>
+          submission.id === selectedSubmission.id
+            ? {
+                ...submission,
+                organizerNotes: notesDraft,
+                updatedAt: new Date().toISOString(),
+              }
+            : submission,
+        )
+        .sort(
+          (left, right) =>
+            new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime(),
+        ),
+    )
+    setFeedback(content.dashboard.feedback.notesSaved)
+  }
+
+  const handleCopySummary = async () => {
+    if (!selectedSubmission) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(
+        buildSubmissionSummary(selectedSubmission, content.form, categoriesById, projectStagesById),
+      )
+      setFeedback(content.dashboard.feedback.copied)
+    } catch {
+      setFeedback(content.dashboard.feedback.blocked)
+    }
+  }
+
+  const stats = [
+    {
+      label: content.dashboard.stats.total,
+      value: submissions.length,
+    },
+    {
+      label: content.dashboard.stats.pending,
+      value: submissions.filter((submission) =>
+        ['submitted', 'reviewing'].includes(submission.reviewStage),
+      ).length,
+    },
+    {
+      label: content.dashboard.stats.shortlisted,
+      value: submissions.filter((submission) => submission.reviewStage === 'shortlisted').length,
+    },
+    {
+      label: content.dashboard.stats.accepted,
+      value: submissions.filter((submission) => submission.reviewStage === 'accepted').length,
+    },
+  ]
+
+  return (
+    <>
+      <section className="dashboard-hero">
+        <div className="container dashboard-hero-grid">
+          <div>
+            <span className="eyebrow">{content.dashboard.eyebrow}</span>
+            <h1>{content.dashboard.title}</h1>
+            <p className="hero-text">{content.dashboard.text}</p>
+
+            <div className="hero-actions">
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => onNavigate('contact', 'apply')}
+              >
+                {content.dashboard.primary}
+              </button>
+            </div>
           </div>
 
-          <ApplicationForm content={content} />
+          <div className="dashboard-stat-grid">
+            {stats.map((item) => (
+              <article key={item.label} className="dashboard-stat-card">
+                <strong>{item.value}</strong>
+                <span>{item.label}</span>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section section--soft">
+        <div className="container dashboard-layout">
+          <aside className="dashboard-sidebar">
+            <article className="dashboard-panel">
+              <div className="panel-header">
+                <div>
+                  <span className="card-eyebrow">{content.dashboard.filtersTitle}</span>
+                  <h2>{content.dashboard.queueTitle}</h2>
+                </div>
+                <p>{content.dashboard.queueText}</p>
+              </div>
+
+              <label className="field">
+                <span>{content.dashboard.searchLabel}</span>
+                <input
+                  value={searchValue}
+                  onChange={(event) => setSearchValue(event.target.value)}
+                  placeholder={content.dashboard.searchPlaceholder}
+                />
+              </label>
+
+              <div className="filter-chip-row">
+                <button
+                  type="button"
+                  className={`filter-chip ${stageFilter === 'all' ? 'is-active' : ''}`}
+                  onClick={() => setStageFilter('all')}
+                >
+                  {content.dashboard.allStages}
+                </button>
+                {content.dashboard.reviewStages.map((stage) => (
+                  <button
+                    key={stage.id}
+                    type="button"
+                    className={`filter-chip ${stageFilter === stage.id ? 'is-active' : ''}`}
+                    onClick={() => setStageFilter(stage.id)}
+                  >
+                    {stage.label}
+                  </button>
+                ))}
+              </div>
+            </article>
+
+            <article className="dashboard-panel dashboard-panel--queue">
+              {filteredSubmissions.length ? (
+                <div className="dashboard-queue">
+                  {filteredSubmissions.map((submission) => (
+                    <button
+                      key={submission.id}
+                      type="button"
+                      className={`queue-item ${
+                        selectedSubmission?.id === submission.id ? 'is-active' : ''
+                      }`}
+                      onClick={() => setSelectedId(submission.id)}
+                    >
+                      <div className="queue-item__head">
+                        <strong>{submission.projectName}</strong>
+                        <span
+                          className={`review-stage-badge review-stage-badge--${submission.reviewStage}`}
+                        >
+                          {reviewStagesById[submission.reviewStage] || submission.reviewStage}
+                        </span>
+                      </div>
+                      <p>{submission.fullName}</p>
+                      <div className="queue-item__meta">
+                        <span>{submission.city}</span>
+                        <span>{categoriesById[submission.category] || submission.category}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="dashboard-empty dashboard-empty--compact">
+                  <h3>{content.dashboard.queueEmptyTitle}</h3>
+                  <p>{content.dashboard.queueEmptyText}</p>
+                </div>
+              )}
+            </article>
+          </aside>
+
+          <section className="dashboard-detail">
+            {selectedSubmission ? (
+              <>
+                <article className="dashboard-panel dashboard-panel--detail">
+                  <div className="dashboard-detail-head">
+                    <div>
+                      <span className="card-eyebrow">{content.dashboard.detailEyebrow}</span>
+                      <h2>{selectedSubmission.projectName}</h2>
+                      <p>
+                        {selectedSubmission.fullName} • {selectedSubmission.age}
+                      </p>
+                    </div>
+                    <span
+                      className={`review-stage-badge review-stage-badge--${selectedSubmission.reviewStage}`}
+                    >
+                      {reviewStagesById[selectedSubmission.reviewStage] ||
+                        selectedSubmission.reviewStage}
+                    </span>
+                  </div>
+
+                  <div className="dashboard-meta-grid">
+                    <div className="dashboard-meta-item">
+                      <span>{content.form.summaryLabels.category}</span>
+                      <strong>
+                        {categoriesById[selectedSubmission.category] || selectedSubmission.category}
+                      </strong>
+                    </div>
+                    <div className="dashboard-meta-item">
+                      <span>{content.dashboard.projectStageLabel}</span>
+                      <strong>
+                        {projectStagesById[selectedSubmission.projectStage] ||
+                          selectedSubmission.projectStage}
+                      </strong>
+                    </div>
+                    <div className="dashboard-meta-item">
+                      <span>{content.dashboard.submittedAt}</span>
+                      <strong>
+                        {formatSubmissionDate(selectedSubmission.createdAt, language)}
+                      </strong>
+                    </div>
+                    <div className="dashboard-meta-item">
+                      <span>{content.dashboard.updatedAt}</span>
+                      <strong>
+                        {formatSubmissionDate(selectedSubmission.updatedAt, language)}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="dashboard-stage-block">
+                    <div className="selection-heading">
+                      <strong>{content.dashboard.stageLabel}</strong>
+                    </div>
+                    <div className="review-stage-grid">
+                      {content.dashboard.reviewStages.map((stage) => (
+                        <button
+                          key={stage.id}
+                          type="button"
+                          className={`review-stage-card ${
+                            selectedSubmission.reviewStage === stage.id ? 'is-selected' : ''
+                          }`}
+                          onClick={() => handleStageChange(selectedSubmission.id, stage.id)}
+                        >
+                          <strong>{stage.label}</strong>
+                          <span>{stage.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </article>
+
+                <div className="dashboard-card-grid">
+                  <article className="dashboard-panel dashboard-panel--response">
+                    <span className="card-eyebrow">{content.dashboard.responsesTitle}</span>
+                    <div className="response-block">
+                      <h3>{content.form.summaryLabels.problem}</h3>
+                      <p>{selectedSubmission.problem}</p>
+                    </div>
+                    <div className="response-block">
+                      <h3>{content.form.summaryLabels.description}</h3>
+                      <p>{selectedSubmission.description}</p>
+                    </div>
+                    <div className="response-inline-grid">
+                      <div className="dashboard-meta-item">
+                        <span>{content.form.summaryLabels.contact}</span>
+                        <strong>{selectedSubmission.contact}</strong>
+                      </div>
+                      <div className="dashboard-meta-item">
+                        <span>{content.form.summaryLabels.school}</span>
+                        <strong>
+                          {selectedSubmission.school || content.form.missingSchool}
+                        </strong>
+                      </div>
+                    </div>
+                    <div className="result-actions">
+                      <a
+                        className="secondary-button"
+                        href={selectedSubmission.recordingLink}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {content.dashboard.openRecording}
+                      </a>
+                    </div>
+                  </article>
+
+                  <article className="dashboard-panel">
+                    <span className="card-eyebrow">{content.dashboard.summaryTitle}</span>
+                    <pre className="dashboard-summary">
+                      {buildSubmissionSummary(
+                        selectedSubmission,
+                        content.form,
+                        categoriesById,
+                        projectStagesById,
+                      )}
+                    </pre>
+                    <div className="result-actions">
+                      <button type="button" className="secondary-button" onClick={handleCopySummary}>
+                        {content.dashboard.copySummary}
+                      </button>
+                    </div>
+                  </article>
+
+                  <article className="dashboard-panel">
+                    <span className="card-eyebrow">{content.dashboard.notesTitle}</span>
+                    <label className="field">
+                      <span>{content.dashboard.notesTitle}</span>
+                      <textarea
+                        rows="7"
+                        value={notesDraft}
+                        onChange={(event) => setNotesDraft(event.target.value)}
+                        placeholder={content.dashboard.notesPlaceholder}
+                      />
+                    </label>
+                    <div className="result-actions">
+                      <button type="button" className="ghost-button" onClick={handleSaveNotes}>
+                        {content.dashboard.saveNotes}
+                      </button>
+                    </div>
+                    {feedback ? <p className="form-feedback">{feedback}</p> : null}
+                  </article>
+                </div>
+              </>
+            ) : submissions.length ? (
+              <div className="dashboard-empty">
+                <h2>{content.dashboard.queueEmptyTitle}</h2>
+                <p>{content.dashboard.queueEmptyText}</p>
+              </div>
+            ) : (
+              <div className="dashboard-empty">
+                <h2>{content.dashboard.emptyTitle}</h2>
+                <p>{content.dashboard.emptyText}</p>
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => onNavigate('contact', 'apply')}
+                >
+                  {content.dashboard.primary}
+                </button>
+              </div>
+            )}
+          </section>
         </div>
       </section>
     </>
@@ -1052,17 +2180,7 @@ function ContactPage({ content, onNavigate }) {
 
 function ApplicationForm({ content }) {
   const [formState, setFormState] = useState(() => {
-    const savedState = window.localStorage.getItem(routeStorageKey)
-
-    if (!savedState) {
-      return initialFormState
-    }
-
-    try {
-      return { ...initialFormState, ...JSON.parse(savedState) }
-    } catch {
-      return initialFormState
-    }
+    return { ...initialFormState, ...readStoredJson(routeStorageKey, initialFormState) }
   })
   const [feedback, setFeedback] = useState('')
   const [resultText, setResultText] = useState('')
@@ -1074,9 +2192,43 @@ function ApplicationForm({ content }) {
   const categoriesById = Object.fromEntries(
     content.form.categories.map((item) => [item.id, item.label]),
   )
+  const stagesById = Object.fromEntries(
+    content.form.stages.map((item) => [item.id, item.label]),
+  )
+
+  const requiredFields = useMemo(
+    () => [
+      formState.fullName,
+      formState.age,
+      formState.city,
+      formState.projectName,
+      formState.problem,
+      formState.description,
+      formState.recordingLink,
+      formState.contact,
+    ],
+    [formState],
+  )
+  const filledCount = requiredFields.filter(isFilled).length
+  const progress = Math.round((filledCount / requiredFields.length) * 100)
+
+  const readinessState = [
+    isFilled(formState.fullName) &&
+      isFilled(formState.age) &&
+      isFilled(formState.city) &&
+      isFilled(formState.contact),
+    isFilled(formState.category) && isFilled(formState.projectStage),
+    isFilled(formState.problem) && isFilled(formState.description),
+    isFilled(formState.recordingLink),
+  ]
+  const statusLabel = progress >= 75 ? content.form.statusReady : content.form.statusInProgress
 
   const handleChange = (event) => {
     const { name, value } = event.target
+    setFormState((current) => ({ ...current, [name]: value }))
+  }
+
+  const updateField = (name, value) => {
     setFormState((current) => ({ ...current, [name]: value }))
   }
 
@@ -1090,28 +2242,36 @@ function ApplicationForm({ content }) {
       return
     }
 
-    const summary = [
-      content.form.summaryTitle,
-      '',
-      `${content.form.summaryLabels.fullName}: ${formState.fullName}`,
-      `${content.form.summaryLabels.age}: ${formState.age}`,
-      `${content.form.summaryLabels.city}: ${formState.city}`,
-      `${content.form.summaryLabels.school}: ${
-        formState.school || content.form.missingSchool
-      }`,
-      `${content.form.summaryLabels.projectName}: ${formState.projectName}`,
-      `${content.form.summaryLabels.category}: ${
-        categoriesById[formState.category] || formState.category
-      }`,
-      `${content.form.summaryLabels.problem}: ${formState.problem}`,
-      '',
-      `${content.form.summaryLabels.description}:`,
-      formState.description,
-      '',
-      `${content.form.summaryLabels.recordingLink}: ${formState.recordingLink}`,
-      `${content.form.summaryLabels.contact}: ${formState.contact}`,
-    ].join('\n')
+    const now = new Date().toISOString()
+    const submissionId = formState.submissionId || createSubmissionId()
+    const existingSubmission = getStoredSubmissions().find(
+      (submission) => submission.id === submissionId,
+    )
+    const nextFormState = {
+      ...formState,
+      submissionId,
+    }
+    const summary = buildSubmissionSummary(nextFormState, content.form, categoriesById, stagesById)
+    const nextSubmission = {
+      ...nextFormState,
+      id: submissionId,
+      reviewStage: existingSubmission?.reviewStage || defaultReviewStage,
+      organizerNotes: existingSubmission?.organizerNotes || '',
+      createdAt: existingSubmission?.createdAt || now,
+      updatedAt: now,
+    }
 
+    saveStoredSubmissions(
+      getStoredSubmissions()
+        .filter((submission) => submission.id !== submissionId)
+        .concat(nextSubmission)
+        .sort(
+          (left, right) =>
+            new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime(),
+        ),
+    )
+
+    setFormState(nextFormState)
     setResultText(summary)
     setFeedback(content.form.feedback.prepared)
   }
@@ -1133,12 +2293,29 @@ function ApplicationForm({ content }) {
   }
 
   return (
-    <div className="form-shell">
+    <div className="form-shell form-shell--enhanced">
       <form className="application-form" onSubmit={handleSubmit}>
         <div className="form-header">
           <span className="card-eyebrow">{content.form.eyebrow}</span>
           <h2>{content.form.title}</h2>
           <p>{content.form.text}</p>
+        </div>
+
+        <div className="progress-card">
+          <div className="progress-copy">
+            <strong>{content.form.progressLabel}</strong>
+            <span>{progress}%</span>
+          </div>
+          <div className="progress-bar">
+            <span style={{ width: `${progress}%` }} />
+          </div>
+          <div className="milestone-row">
+            {content.form.milestones.map((item) => (
+              <span key={item} className="milestone-chip">
+                {item}
+              </span>
+            ))}
+          </div>
         </div>
 
         <div className="field-grid">
@@ -1178,6 +2355,49 @@ function ApplicationForm({ content }) {
           />
         </div>
 
+        <div className="selection-block">
+          <div className="selection-heading">
+            <strong>{content.form.fields.category}</strong>
+          </div>
+          <div className="category-grid">
+            {content.form.categories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                className={`category-card ${
+                  formState.category === category.id ? 'is-selected' : ''
+                }`}
+                aria-pressed={formState.category === category.id}
+                onClick={() => updateField('category', category.id)}
+              >
+                <strong>{category.label}</strong>
+                <span>{category.description}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="selection-block">
+          <div className="selection-heading">
+            <strong>{content.form.fields.projectStage}</strong>
+          </div>
+          <div className="stage-row">
+            {content.form.stages.map((stage) => (
+              <button
+                key={stage.id}
+                type="button"
+                className={`stage-chip ${
+                  formState.projectStage === stage.id ? 'is-selected' : ''
+                }`}
+                aria-pressed={formState.projectStage === stage.id}
+                onClick={() => updateField('projectStage', stage.id)}
+              >
+                {stage.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="field-grid">
           <Field
             label={content.form.fields.projectName}
@@ -1188,49 +2408,50 @@ function ApplicationForm({ content }) {
             required
           />
 
-          <label className="field">
-            <span>{content.form.fields.category}</span>
-            <select name="category" value={formState.category} onChange={handleChange}>
-              {content.form.categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="field">
+            <span>{content.form.fields.problem}</span>
+            <input
+              name="problem"
+              value={formState.problem}
+              onChange={handleChange}
+              placeholder={content.form.placeholders.problem}
+              required
+            />
+            <small className="field-helper">{content.form.helpers.problem}</small>
+          </div>
         </div>
 
-        <div className="field-grid field-grid--stacked">
-          <Field
-            label={content.form.fields.problem}
-            name="problem"
-            value={formState.problem}
-            onChange={handleChange}
-            placeholder={content.form.placeholders.problem}
-            required
-          />
-
-          <label className="field">
+        <div className="field-grid">
+          <div className="field field--full">
             <span>{content.form.fields.description}</span>
             <textarea
               name="description"
               value={formState.description}
               onChange={handleChange}
-              rows="6"
+              rows="5"
               placeholder={content.form.placeholders.description}
               required
             />
-          </label>
+            <div className="field-meta">
+              <small className="field-helper">{content.form.helpers.description}</small>
+              <small>{formState.description.trim().length}</small>
+            </div>
+          </div>
+        </div>
 
-          <Field
-            label={content.form.fields.recordingLink}
-            name="recordingLink"
-            type="url"
-            value={formState.recordingLink}
-            onChange={handleChange}
-            placeholder={content.form.placeholders.recordingLink}
-            required
-          />
+        <div className="field-grid">
+          <div className="field">
+            <span>{content.form.fields.recordingLink}</span>
+            <input
+              name="recordingLink"
+              type="url"
+              value={formState.recordingLink}
+              onChange={handleChange}
+              placeholder={content.form.placeholders.recordingLink}
+              required
+            />
+            <small className="field-helper">{content.form.helpers.recordingLink}</small>
+          </div>
 
           <Field
             label={content.form.fields.contact}
@@ -1259,6 +2480,42 @@ function ApplicationForm({ content }) {
         <h3>{content.form.resultTitle}</h3>
         <p>{content.form.resultText}</p>
 
+        <div className="snapshot-card">
+          <h4>{content.form.snapshotTitle}</h4>
+          <div className="snapshot-grid">
+            <div className="snapshot-item">
+              <span>{content.form.snapshotLabels.projectName}</span>
+              <strong>{formState.projectName || content.form.snapshotEmpty}</strong>
+            </div>
+            <div className="snapshot-item">
+              <span>{content.form.snapshotLabels.category}</span>
+              <strong>
+                {categoriesById[formState.category] || content.form.snapshotEmpty}
+              </strong>
+            </div>
+            <div className="snapshot-item">
+              <span>{content.form.snapshotLabels.projectStage}</span>
+              <strong>{stagesById[formState.projectStage] || content.form.snapshotEmpty}</strong>
+            </div>
+            <div className="snapshot-item">
+              <span>{content.form.snapshotLabels.status}</span>
+              <strong>{statusLabel}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="readiness-card">
+          <h4>{content.form.readinessTitle}</h4>
+          <ul className="readiness-list">
+            {content.form.readinessItems.map((item, index) => (
+              <li key={item} className={readinessState[index] ? 'is-complete' : ''}>
+                <span>{readinessState[index] ? '✓' : '•'}</span>
+                <p>{item}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         <pre>{resultText || content.form.resultEmpty}</pre>
 
         <div className="result-actions">
@@ -1282,6 +2539,18 @@ function Field({ label, ...props }) {
       <span>{label}</span>
       <input {...props} />
     </label>
+  )
+}
+
+function HackathonLockup({ content, variant = 'hero' }) {
+  return (
+    <div className={`hackathon-lockup hackathon-lockup--${variant}`}>
+      <img
+        className="hackathon-lockup__icon"
+        src={hackathonLogo}
+        alt={content.hackathonLogoAlt}
+      />
+    </div>
   )
 }
 
@@ -1317,21 +2586,65 @@ function SiteFooter({ content, onNavigate }) {
   return (
     <footer className="site-footer">
       <div className="container footer-grid">
-        <div>
-          <span className="eyebrow">{content.footer.eyebrow}</span>
-          <h2>{content.footer.title}</h2>
+        <div className="footer-brand-block">
+          <button
+            type="button"
+            className="footer-hackathon-mark"
+            onClick={() => onNavigate('home')}
+            aria-label={content.footer.home}
+          >
+            <HackathonLockup content={content} variant="compact" />
+          </button>
+
+          <div>
+            <span className="eyebrow">{content.footer.eyebrow}</span>
+            <h2>{content.footer.title}</h2>
+            <p>{content.footer.text}</p>
+          </div>
         </div>
 
-        <div className="footer-links">
-          <button type="button" onClick={() => onNavigate('home')}>
-            {content.footer.home}
-          </button>
-          <button type="button" onClick={() => onNavigate('home', 'tracks')}>
-            {content.footer.tracks}
-          </button>
-          <button type="button" onClick={() => onNavigate('contact', 'apply')}>
-            {content.footer.apply}
-          </button>
+        <div className="footer-center-block">
+          <div className="footer-logo-strip">
+            <img src={codeSproutsLogo} alt="Code Sprouts Palestine logo" />
+            <a
+              className="logo-link logo-link--tfp-footer"
+              href={techFromPalestineUrl}
+              aria-label="Visit Tech From Palestine"
+            >
+              <img src={techFromPalestineLogo} alt="Tech From Palestine logo" />
+            </a>
+          </div>
+
+          <div className="footer-links">
+            <button type="button" onClick={() => onNavigate('home')}>
+              {content.footer.home}
+            </button>
+            <button type="button" onClick={() => onNavigate('home', 'tracks')}>
+              {content.footer.tracks}
+            </button>
+            <button type="button" onClick={() => onNavigate('dashboard')}>
+              {content.footer.dashboard}
+            </button>
+            <button type="button" onClick={() => onNavigate('contact', 'apply')}>
+              {content.footer.apply}
+            </button>
+          </div>
+        </div>
+
+        <div className="footer-contact-card">
+          <span className="card-eyebrow">{content.footer.contactTitle}</span>
+          <p>{content.footer.contactText}</p>
+
+          <div className="footer-contact-list">
+            <a className="footer-contact-link" href={`mailto:${contactEmail}`}>
+              <span>{content.footer.emailLabel}</span>
+              <strong>{contactEmail}</strong>
+            </a>
+            <a className="footer-contact-link" href={`tel:${contactPhone}`}>
+              <span>{content.footer.phoneLabel}</span>
+              <strong>{contactPhone}</strong>
+            </a>
+          </div>
         </div>
       </div>
     </footer>
