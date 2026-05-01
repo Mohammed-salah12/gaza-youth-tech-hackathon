@@ -854,6 +854,7 @@ const content = {
       title: 'Built to spotlight young Palestinian technology talent.',
       text:
         'A youth hackathon shaped by Gaza, powered by partnership, and open to ideas that deserve a bigger stage.',
+      rights: 'All copyrights reserved by TFP & CSP 2026',
       contactTitle: 'Contact',
       contactText: 'Reach the organizing team for questions, support, or partnership follow-up.',
       emailLabel: 'Email',
@@ -1671,6 +1672,7 @@ const content = {
       title: 'مساحة تبرز المواهب التقنية الشابة في فلسطين.',
       text:
         'هاكاثون شبابي تنطلق قصته من غزة، وتدعمه الشراكة، ويمنح الأفكار التي تستحق فرصة مساحة أكبر للظهور.',
+      rights: 'جميع الحقوق محفوظة لـ TFP و CSP لعام 2026',
       contactTitle: 'تواصل معنا',
       contactText: 'تواصل مع فريق التنظيم لأي سؤال أو دعم أو متابعة متعلقة بالشراكة.',
       emailLabel: 'البريد الإلكتروني',
@@ -4581,6 +4583,10 @@ function SiteFooter({ content, onNavigate }) {
             </a>
           </div>
         </div>
+      </div>
+
+      <div className="container footer-legal">
+        <p>{content.footer.rights}</p>
       </div>
     </footer>
   )

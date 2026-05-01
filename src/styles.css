@@ -1268,6 +1268,8 @@ main {
   display: grid;
   place-items: center;
   padding: 1.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: rgba(9, 16, 38, 0.72);
   backdrop-filter: blur(16px);
 }
@@ -1275,10 +1277,12 @@ main {
 .video-modal__panel {
   position: relative;
   width: min(1080px, 100%);
+  max-height: calc(100vh - 3rem);
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
   gap: 1.2rem;
   padding: 1.15rem;
+  overflow: auto;
   border-radius: 32px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background:
@@ -1309,7 +1313,7 @@ main {
 }
 
 .video-modal__stage {
-  min-height: 26rem;
+  min-height: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 0.9rem;
@@ -1330,6 +1334,7 @@ main {
   align-items: center;
   justify-content: space-between;
   gap: 0.9rem;
+  flex-wrap: wrap;
 }
 
 .video-modal__stage-topbar {
@@ -1341,6 +1346,7 @@ main {
   align-items: center;
   gap: 0.7rem;
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .video-modal__stage-badge {
@@ -1379,15 +1385,19 @@ main {
 }
 
 .video-modal__stage-title {
+  flex: 1 1 14rem;
+  max-width: 100%;
   font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-align: end;
+  white-space: normal;
+  line-height: 1.35;
 }
 
 .video-modal__viewport {
   position: relative;
-  min-height: 20rem;
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+  max-height: min(60vh, 34rem);
   border-radius: 24px;
   overflow: hidden;
   background:
@@ -1476,6 +1486,7 @@ main {
   display: grid;
   align-content: start;
   gap: 1rem;
+  min-width: 0;
   padding: 0.5rem 0.4rem 0.35rem 0;
 }
 
@@ -1548,7 +1559,7 @@ main {
 .video-modal__placeholder-screen {
   position: relative;
   height: 100%;
-  min-height: 100%;
+  min-height: 0;
   background:
     radial-gradient(circle at top right, rgba(255, 255, 255, 0.12), transparent 22%),
     linear-gradient(160deg, rgba(18, 40, 111, 0.96), rgba(38, 67, 178, 0.8));
@@ -3496,6 +3507,21 @@ main {
   overflow-wrap: anywhere;
 }
 
+.footer-legal {
+  padding-top: 1rem;
+}
+
+.footer-legal p {
+  margin: 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(18, 40, 111, 0.08);
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
 [dir='rtl'] .brand {
   text-align: right;
 }
@@ -3759,15 +3785,16 @@ main {
   }
 
   .video-modal__panel {
+    width: min(720px, 100%);
     grid-template-columns: 1fr;
   }
 
   .video-modal__stage {
-    min-height: 22rem;
+    gap: 0.8rem;
   }
 
   .video-modal__viewport {
-    min-height: 18rem;
+    max-height: min(52vh, 28rem);
   }
 
   .video-modal__content {
@@ -3878,24 +3905,172 @@ main {
   }
 
   .video-modal__panel {
+    width: min(100%, 36rem);
+    max-height: calc(100vh - 1.5rem);
     padding: 1rem;
     border-radius: 26px;
   }
 
+  .video-modal__close {
+    top: 0.75rem;
+    inset-inline-end: 0.75rem;
+    width: 2.45rem;
+    height: 2.45rem;
+  }
+
   .video-modal__stage {
-    min-height: 18.5rem;
+    gap: 0.75rem;
+    padding: 0.8rem;
+    border-radius: 22px;
+  }
+
+  .video-modal__stage-topbar {
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .video-modal__stage-meta {
+    gap: 0.55rem;
+  }
+
+  .video-modal__stage-badge,
+  .video-modal__stage-tag {
+    font-size: 0.72rem;
+  }
+
+  .video-modal__stage-title {
+    flex-basis: 100%;
+    text-align: start;
+    font-size: 0.95rem;
   }
 
   .video-modal__viewport {
-    min-height: 14rem;
+    aspect-ratio: 16 / 10;
+    max-height: none;
+    border-radius: 18px;
   }
 
-  .video-modal__placeholder-screen {
-    min-height: 14rem;
+  .video-modal__stage-dock {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.7rem;
+  }
+
+  .video-modal__timeline {
+    width: 100%;
+  }
+
+  .video-modal__controls {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.65rem;
+  }
+
+  .video-modal__control {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .video-modal__control--play {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .video-modal__control--play::before {
+    border-top-width: 0.32rem;
+    border-bottom-width: 0.32rem;
+    border-left-width: 0.5rem;
+  }
+
+  .video-modal__time {
+    margin-inline-start: 0;
+    font-size: 0.76rem;
+  }
+
+  .video-modal__placeholder-play {
+    width: 4.4rem;
+    height: 4.4rem;
+  }
+
+  .video-modal__placeholder-play::before {
+    border-top-width: 0.72rem;
+    border-bottom-width: 0.72rem;
+    border-left-width: 1.08rem;
+  }
+
+  .video-modal__placeholder-bars span {
+    inset-inline-start: 0.9rem;
+    height: 0.68rem;
+  }
+
+  .video-modal__placeholder-bars span:first-child {
+    inset-block-end: 2.6rem;
+    width: calc(100% - 1.8rem);
+  }
+
+  .video-modal__placeholder-bars span:last-child {
+    inset-block-end: 1.45rem;
+  }
+
+  .video-modal__placeholder-orb {
+    top: 0.9rem;
+    inset-inline-end: 0.9rem;
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .video-modal__placeholder-copy {
+    inset-inline-start: 0.9rem;
+    inset-inline-end: 0.9rem;
+    inset-block-end: 4rem;
+    gap: 0.35rem;
+  }
+
+  .video-modal__placeholder-copy strong {
+    font-size: 1rem;
+  }
+
+  .video-modal__placeholder-copy p {
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .video-modal__content {
+    gap: 0.8rem;
+    padding: 0 0.1rem 0.1rem;
   }
 
   .video-modal__content h3 {
-    font-size: 1.8rem;
+    font-size: clamp(1.45rem, 6vw, 1.8rem);
+  }
+
+  .video-modal__content p {
+    font-size: 0.95rem;
+    line-height: 1.56;
+  }
+
+  .video-modal__chip {
+    padding: 0.55rem 0.72rem;
+    font-size: 0.88rem;
+  }
+
+  .video-modal__highlight-list {
+    gap: 0.6rem;
+  }
+
+  .video-modal__highlight {
+    padding: 0.8rem 0.85rem;
+    gap: 0.7rem;
+    border-radius: 18px;
+  }
+
+  .video-modal__highlight span {
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+
+  .video-modal__external {
+    width: 100%;
   }
 
   .wizard-actions > * {
