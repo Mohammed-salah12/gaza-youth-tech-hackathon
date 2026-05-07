@@ -1,48 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
-import codeSproutsLogo from '../assets/code-sprouts-palestine-logo.jpeg'
-import techFromPalestineLogo from '../assets/tech-from-palestine-logo-highres.jpg'
-import hackathonLogo from '../assets/hackathon-logos/hackathon-logo-master.png'
-
-const routeStorageKey = 'gaza-youth-tech-hackathon-application'
-const submissionsStorageKey = 'gaza-youth-tech-hackathon-submissions'
-const languageStorageKey = 'gaza-youth-tech-hackathon-language'
-const defaultCategory = ''
-const defaultStage = ''
-const defaultReviewStage = 'submitted'
-const techFromPalestineUrl = 'https://techfrompalestine.org/'
-const contactEmail = 'contact@techfrompalestine.org'
-const contactPhone = '00972597262318'
-
-const initialFormState = {
-  submissionId: '',
-  fullName: '',
-  age: '',
-  applicationOwner: '',
-  city: '',
-  school: '',
-  teamType: 'solo',
-  teamMemberTwoName: '',
-  teamMemberTwoAge: '',
-  teamMemberTwoCity: '',
-  teamMemberTwoContact: '',
-  teamMemberThreeName: '',
-  teamMemberThreeAge: '',
-  teamMemberThreeCity: '',
-  teamMemberThreeContact: '',
-  adultRole: '',
-  adultName: '',
-  mentorEnabled: 'no',
-  mentorName: '',
-  mentorContact: '',
-  projectName: '',
-  category: defaultCategory,
-  projectStage: defaultStage,
-  problem: '',
-  description: '',
-  recordingLink: '',
-  projectLink: '',
-  contact: '',
-}
+import { useEffect, useState } from 'react'
+import SiteFooter from './components/layout/SiteFooter'
+import SiteHeader from './components/layout/SiteHeader'
+import ContactPage from './components/pages/ContactPage'
+import DashboardPage from './components/pages/DashboardPage'
+import HomePage from './components/pages/HomePage'
+import VideoPreviewModal from './components/shared/VideoPreviewModal'
+import { languageStorageKey, techFromPalestineUrl } from './config/appConfig'
+import { applyPageImages } from './config/siteImages'
+import { getPreferredLanguage, parseHash, scrollToRoute } from './utils/appUtils'
 
 const content = {
   en: {
@@ -93,20 +58,20 @@ const content = {
         'Explain the problem and your solution clearly',
         'Add one short recording link to support your story',
       ],
+      // Developer note: the image for these cards now lives in `src/config/siteImages.js`.
       mediaCards: [
         {
           badge: 'Contest visual',
           type: 'photo',
           title: 'Summer 2026 launch',
           note: 'A youth contest for apps, robotics, Arduino builds, and local problem solving.',
-          image: hackathonLogo,
-          imageAlt: 'Gaza Youth Tech Hackathon launch visual',
         },
         {
           badge: 'Demo stage',
           type: 'video',
           title: 'Student pitch clips',
           note: 'Short videos from participating teams will bring each idea to life during the contest.',
+          videoUrl: '/media/hero/student-pitch-clips.mp4',
         },
       ],
     },
@@ -127,6 +92,7 @@ const content = {
           'A short demo makes the idea easy to feel and remember',
         ],
       },
+      // Developer note: image fields now live in `src/config/siteImages.js`; keep `videoUrl` or `embedUrl` here only for video cards.
       featured: {
         badge: 'Opening photo',
         type: 'photo',
@@ -135,6 +101,7 @@ const content = {
         size: 'hero',
         tone: 'mist',
       },
+      // Developer note: image fields now live in `src/config/siteImages.js`; keep `videoUrl` or `embedUrl` here only for video cards.
       cards: [
         {
           badge: 'Coding moment',
@@ -151,6 +118,7 @@ const content = {
           note: 'Apps, robots, and sensors begin to move from concept to something visible, testable, and exciting.',
           size: 'landscape',
           tone: 'blue',
+          videoUrl: '/media/builders-gallery/prototype-in-motion.mp4',
         },
         {
           badge: 'Making photo',
@@ -175,6 +143,7 @@ const content = {
           note: 'Short demo runs help students explain the problem, show the solution, and build confidence before the final presentation.',
           size: 'landscape',
           tone: 'violet',
+          videoUrl: '/media/builders-gallery/pitch-rehearsal-and-final-demo.mp4',
         },
       ],
     },
@@ -184,6 +153,7 @@ const content = {
       body:
         'Not every strong memory follows the project timeline. This section captures the atmosphere around it: crowd energy, mentor conversations, surprise reactions, and short videos that make the event feel alive.',
       notes: ['Crowd shots', 'Mentor clips', 'Reaction moments', 'Celebration'],
+      loadMoreLabel: 'Load more moments',
       cards: [
         {
           badge: 'Candid photo',
@@ -200,37 +170,235 @@ const content = {
           note: 'Short clips can capture the honest excitement that happens between testing, laughing, and showing someone a breakthrough.',
           size: 'story',
           tone: 'flash',
-        },
-        {
-          badge: 'Venue photo',
-          type: 'photo',
-          title: 'The room in full motion',
-          note: 'A wider scene shows laptops open, tables busy, people moving, and the contest atmosphere building in every corner.',
-          size: 'square',
-          tone: 'mist',
+          videoUrl: '/media/around-the-room/quick-reactions.mp4',
         },
         {
           badge: 'Mentor moment',
           type: 'photo',
-          title: 'Advice in the middle of the build',
-          note: 'Some of the best images come from a mentor leaning in, pointing at a detail, and helping a team see the next step clearly.',
+          title: 'Mentor check-in at the table',
+          note: 'A quick check-in at the table shows how encouragement, explanation, and laughter often happen in the same moment.',
+          size: 'square',
+          tone: 'peach',
+        },
+        {
+          badge: 'Build photo',
+          type: 'photo',
+          title: 'Building the first version',
+          note: 'A breadboard, Arduino board, and a simple game on screen make the first working version feel real.',
+          size: 'square',
+          tone: 'sun',
+        },
+        {
+          badge: 'Build clip',
+          type: 'video',
+          title: 'Practical build in motion',
+          note: 'A close-up clip from the table keeps the hands-on side of the day visible, not just the final result.',
           size: 'landscape',
           tone: 'mint',
+          videoUrl: '/media/around-the-room/practical-build.mp4',
+        },
+        {
+          badge: 'Playtest photo',
+          type: 'photo',
+          title: 'Testing the game together',
+          note: 'Watching the game on screen while the wires stay connected makes the whole table feel involved in the test, not just one student.',
+          size: 'square',
+          tone: 'mist',
+        },
+        {
+          badge: 'Venue photo',
+          type: 'photo',
+          title: 'Inside the build space',
+          note: 'A wider scene shows laptops open, tables busy, people moving, and the contest atmosphere building in every corner.',
+          size: 'banner',
+          tone: 'mist',
+        },
+        {
+          badge: 'Team clip',
+          type: 'video',
+          title: 'Inside the workspace',
+          note: 'This quick clip shows how naturally teams gather, explain progress, and pull others into the moment.',
+          size: 'square',
+          tone: 'mint',
+          videoUrl: '/media/around-the-room/teams-inside-the-build-space.mp4',
+        },
+        {
+          badge: 'Focus photo',
+          type: 'photo',
+          title: 'Quiet build focus',
+          note: 'Some of the strongest room moments are quieter: a student holds the controls steady while the team watches for the next response.',
+          size: 'story',
+          tone: 'sun',
+        },
+        {
+          badge: 'Mentor moment',
+          type: 'photo',
+          title: 'The people behind the project',
+          note: 'The strongest room moments often come from the faces around the table: students listening closely, explaining ideas, and helping each other think.',
+          size: 'square',
+          tone: 'peach',
+        },
+        {
+          badge: 'Prototype clip',
+          type: 'video',
+          title: 'First version in motion',
+          note: 'A short screen-and-hardware clip turns early progress into something visible, testable, and easy to share.',
+          size: 'square',
+          tone: 'night',
+          videoUrl: '/media/around-the-room/first-version-in-motion.mp4',
+        },
+        {
+          badge: 'Screen close-up',
+          type: 'photo',
+          title: 'Prototype score on screen',
+          note: 'A close-up of the live score, speed, and remaining lives turns testing into a visible little milestone.',
+          size: 'square',
+          tone: 'night',
+        },
+        {
+          badge: 'Circuit photo',
+          type: 'photo',
+          title: 'Hands on the controls',
+          note: 'A simple breadboard and a few careful fingers are enough to show how much attention goes into every tiny adjustment.',
+          size: 'square',
+          tone: 'sun',
         },
         {
           badge: 'Backstage clip',
           type: 'video',
           title: 'Fast videos between demos',
           note: 'Quick footage between formal presentations can show real personality, movement, and the natural rhythm of the event.',
+          size: 'banner',
+          tone: 'flash',
+          videoUrl: '/media/around-the-room/fast-demo-clips.mp4',
+        },
+        {
+          badge: 'Live demo clip',
+          type: 'video',
+          title: 'Mentor demo in motion',
+          note: 'A short clip from the mentoring table captures the kind of explanation that makes the whole room pause and pay attention.',
+          size: 'landscape',
+          tone: 'blue',
+          videoUrl: '/media/around-the-room/mentor-demo-in-motion.mp4',
+        },
+        {
+          badge: 'Workshop photo',
+          type: 'photo',
+          title: 'Holding up the sensor',
+          note: 'A tiny component lifted into view can turn an abstract explanation into something every student can immediately follow.',
+          size: 'story',
+          tone: 'sun',
+        },
+        {
+          badge: 'Circuit photo',
+          type: 'photo',
+          title: 'Checking the display wiring',
+          note: 'Wires, questions, and quick hand movements all point to the same thing: the table itself becomes part of the explanation.',
+          size: 'story',
+          tone: 'mist',
+        },
+        {
+          badge: 'Room photo',
+          type: 'photo',
+          title: 'The room learning together',
+          note: 'The wider classroom view shows every table testing, listening, and building at the same time.',
+          size: 'story',
+          tone: 'peach',
+        },
+        {
+          badge: 'Debug photo',
+          type: 'photo',
+          title: 'Debugging at one crowded table',
+          note: 'Open terminals, loose jumper wires, and people leaning in say a lot about how real debugging actually looks.',
           size: 'square',
           tone: 'night',
         },
         {
-          badge: 'Celebration photo',
+          badge: 'Coding photo',
           type: 'photo',
-          title: 'The moment a team knows it works',
-          note: 'Smiles, raised hands, and shared excitement turn into the kind of photo people remember long after the day ends.',
-          size: 'banner',
+          title: 'Pair programming on one laptop',
+          note: 'Two students leaning into one screen is often enough to move a stuck idea forward.',
+          size: 'story',
+          tone: 'mint',
+        },
+        {
+          badge: 'Team photo',
+          type: 'photo',
+          title: 'Students coding side by side',
+          note: 'Coding shoulder to shoulder turns the laptop into a shared workspace instead of a solo task.',
+          size: 'story',
+          tone: 'mist',
+        },
+        {
+          badge: 'Table photo',
+          type: 'photo',
+          title: 'Sharing a laptop from every angle',
+          note: 'When several students lean around one device, the laptop stops feeling personal and starts becoming the team\'s common ground.',
+          size: 'landscape',
+          tone: 'peach',
+        },
+        {
+          badge: 'Browser photo',
+          type: 'photo',
+          title: 'Working through the browser flow',
+          note: 'A browser-based tool on one screen can be just enough to get the next test, answer, or idea moving.',
+          size: 'story',
+          tone: 'blue',
+        },
+        {
+          badge: 'Focus photo',
+          type: 'photo',
+          title: 'Focus on the next fix',
+          note: 'Some progress comes from a quiet minute where a student studies the screen and decides what to change next.',
+          size: 'story',
+          tone: 'sun',
+        },
+        {
+          badge: 'Mentor photo',
+          type: 'photo',
+          title: 'Mentor feedback circle',
+          note: 'A mentor standing over a small circle can reset the direction of a whole team in just a few sentences.',
+          size: 'story',
+          tone: 'peach',
+        },
+        {
+          badge: 'Review photo',
+          type: 'photo',
+          title: 'Screen review together',
+          note: 'Sometimes the next step is simply slowing down together and reading the code line by line.',
+          size: 'story',
+          tone: 'night',
+        },
+        {
+          badge: 'Code photo',
+          type: 'photo',
+          title: 'Reading the code line by line',
+          note: 'A shared screen creates the kind of focused silence where one useful detail suddenly becomes obvious.',
+          size: 'square',
+          tone: 'mint',
+        },
+        {
+          badge: 'Python photo',
+          type: 'photo',
+          title: 'First Python line on screen',
+          note: 'Seeing the first small Python output on screen gives the whole table something concrete to react to.',
+          size: 'story',
+          tone: 'flash',
+        },
+        {
+          badge: 'Girls team photo',
+          type: 'photo',
+          title: 'One more try from the girls table',
+          note: 'This table has its own rhythm: patient, focused, and ready to try again until the idea works.',
+          size: 'story',
+          tone: 'mist',
+        },
+        {
+          badge: 'Room photo',
+          type: 'photo',
+          title: 'Quiet corner still building',
+          note: 'Even away from the center of the room, students keep building in their own steady rhythm.',
+          size: 'story',
           tone: 'sun',
         },
       ],
@@ -239,6 +407,14 @@ const content = {
       eyebrow: 'Video spotlight',
       openLabel: 'Open video preview',
       closeLabel: 'Close preview',
+      playerLabels: {
+        play: 'Play video',
+        pause: 'Pause video',
+        progress: 'Video progress',
+        muteShort: 'Mute',
+        unmuteShort: 'Sound on',
+        restartShort: 'Restart',
+      },
       placeholderTitle: 'Project clips deserve a stage of their own',
       placeholderText:
         'This cinematic viewer is ready for student demos, pitch rehearsals, mentor clips, and fast moments from the build room.',
@@ -406,14 +582,12 @@ const content = {
       cards: [
         {
           name: 'Tech From Palestine',
-          logo: techFromPalestineLogo,
           href: techFromPalestineUrl,
           body:
             'Tech From Palestine is a nonprofit founded in Gaza to expand access to quality technology education and global opportunity for Palestinian youth and engineers. Through hands-on training in programming, robotics, electronics, and embedded systems, and through community programs such as Tech Explorers and Tech Teens, it has supported more than 1,000 engineers, connected 100+ professionals with international opportunities, and introduced 500+ children and youth to the world of technology in safe, practical learning spaces.',
         },
         {
           name: 'Code Sprouts Palestine',
-          logo: codeSproutsLogo,
           body:
             'Code Sprouts Palestine helps establish volunteer-led coding clubs by training volunteers, sharing learning materials, and supporting clubs that are managed independently by their local teams. Its decentralized model encourages leadership, peer learning, creativity, and long-term community ownership, giving children and teens welcoming spaces to explore coding, problem solving, robotics, and technology with confidence.',
         },
@@ -470,6 +644,7 @@ const content = {
       body:
         'Each application can showcase one main image, one short demo video, and one making photo. This gives judges and visitors a fast visual sense of the idea before they read the details.',
       notes: ['Project cover image', 'Short demo video', 'Behind-the-build photo'],
+      // Developer note: image fields now live in `src/config/siteImages.js`; keep `videoUrl` or `embedUrl` here only for video cards.
       cards: [
         {
           badge: 'Project image',
@@ -778,7 +953,7 @@ const content = {
       eyebrow: 'Organizer dashboard',
       title: 'Review applications, move them through stages, and keep the full story visible.',
       text:
-        'This client-side dashboard helps the team read every response, track acceptance status, and keep notes while the official backend is still on the way.',
+        'This live dashboard reads submissions, organizer notes, admins, and Around the room media from the Express backend connected to Mongo Atlas.',
       primary: 'Open the application form',
       stats: {
         total: 'Saved responses',
@@ -796,7 +971,7 @@ const content = {
       queueEmptyText: 'Try another search term or switch to a different stage.',
       emptyTitle: 'No submissions have been saved yet',
       emptyText:
-        'Once an application is prepared from the form, it will appear here automatically on this device.',
+        'Once an application is submitted from the form, it will appear here from the backend for the whole organizer team.',
       detailEyebrow: 'Submission details',
       detailTitle: 'Response details',
       stageLabel: 'Acceptance stage',
@@ -913,20 +1088,20 @@ const content = {
         'اشرح المشكلة والحل بشكل واضح',
         'أرفق رابط تسجيل قصير يدعم قصتك بصوتك',
       ],
+      // Developer note: the image for these cards now lives in `src/config/siteImages.js`.
       mediaCards: [
         {
           badge: 'صورة الحدث',
           type: 'photo',
           title: 'إطلاق صيف 2026',
           note: 'مسابقة شبابية للتطبيقات والروبوت والأردوينو والأفكار التقنية التي تخدم المجتمع.',
-          image: hackathonLogo,
-          imageAlt: 'الصورة البصرية لهاكاثون غزة للتكنولوجيا للشباب',
         },
         {
           badge: 'منصة العرض',
           type: 'video',
           title: 'مقاطع عرض الطلاب',
           note: 'فيديوهات الفرق المشاركة ستمنح كل فكرة حضورها الحقيقي خلال المسابقة.',
+          videoUrl: '/media/hero/student-pitch-clips.mp4',
         },
       ],
     },
@@ -947,6 +1122,7 @@ const content = {
           'عرض قصير يجعل الفكرة سهلة الإحساس وسهلة التذكّر',
         ],
       },
+      // Developer note: image fields now live in `src/config/siteImages.js`; keep `videoUrl` or `embedUrl` here only for video cards.
       featured: {
         badge: 'الصورة الافتتاحية',
         type: 'photo',
@@ -955,6 +1131,7 @@ const content = {
         size: 'hero',
         tone: 'mist',
       },
+      // Developer note: image fields now live in `src/config/siteImages.js`; keep `videoUrl` or `embedUrl` here only for video cards.
       cards: [
         {
           badge: 'لحظة برمجة',
@@ -971,6 +1148,7 @@ const content = {
           note: 'هنا يظهر المشروع وهو يتحول من فكرة إلى شيء يمكن رؤيته واختباره والإحساس بحضوره الحقيقي.',
           size: 'landscape',
           tone: 'blue',
+          videoUrl: '/media/builders-gallery/prototype-in-motion.mp4',
         },
         {
           badge: 'صورة التنفيذ',
@@ -995,6 +1173,7 @@ const content = {
           note: 'العرض القصير قبل التقديم النهائي يمنح الطلاب فرصة لشرح المشكلة وإبراز الحل وبناء الثقة أمام الآخرين.',
           size: 'landscape',
           tone: 'violet',
+          videoUrl: '/media/builders-gallery/pitch-rehearsal-and-final-demo.mp4',
         },
       ],
     },
@@ -1004,6 +1183,7 @@ const content = {
       body:
         'ليست كل الذكريات مرتبطة بخطوات المشروع فقط. هذا القسم يوثق الأجواء المحيطة بها: طاقة القاعة، أحاديث المرشدين، ردود الفعل المفاجئة، والمقاطع القصيرة التي تجعل الحدث حيًا في الذاكرة.',
       notes: ['لقطات الجمهور', 'مقاطع المرشدين', 'لحظات التفاعل', 'فرحة الإنجاز'],
+      loadMoreLabel: 'تحميل المزيد من اللقطات',
       cards: [
         {
           badge: 'صورة عفوية',
@@ -1020,37 +1200,235 @@ const content = {
           note: 'المقاطع القصيرة تلتقط الحماس الحقيقي بين الاختبار والضحك ومشاركة لحظة النجاح مع الآخرين.',
           size: 'story',
           tone: 'flash',
-        },
-        {
-          badge: 'صورة المكان',
-          type: 'photo',
-          title: 'القاعة وهي تتحرك بالحياة',
-          note: 'المشهد الواسع يُظهر اللابتوبات المفتوحة والطاولات المزدحمة والحركة التي تصنع أجواء المسابقة في كل زاوية.',
-          size: 'square',
-          tone: 'mist',
+          videoUrl: '/media/around-the-room/quick-reactions.mp4',
         },
         {
           badge: 'لحظة إرشاد',
           type: 'photo',
-          title: 'نصيحة في منتصف البناء',
-          note: 'من أجمل الصور تلك التي يظهر فيها المرشد وهو يقترب من الفريق ويوجه النظر إلى تفصيلة تصنع الفارق.',
+          title: 'متابعة إرشادية على الطاولة',
+          note: 'متابعة سريعة على الطاولة تُظهر كيف يجتمع التشجيع والشرح والضحك في لحظة واحدة.',
+          size: 'square',
+          tone: 'peach',
+        },
+        {
+          badge: 'صورة تنفيذ',
+          type: 'photo',
+          title: 'بناء النسخة الأولى',
+          note: 'لوحة الأردوينو والأسلاك والنسخة البسيطة على الشاشة تجعل الفكرة تبدو حقيقية منذ اللحظة الأولى.',
+          size: 'square',
+          tone: 'sun',
+        },
+        {
+          badge: 'مقطع تنفيذ',
+          type: 'video',
+          title: 'البناء العملي وهو يتحرك',
+          note: 'اللقطة القريبة من طاولة العمل تُبقي الجانب العملي من اليوم حاضرًا، لا النتيجة النهائية فقط.',
           size: 'landscape',
           tone: 'mint',
+          videoUrl: '/media/around-the-room/practical-build.mp4',
+        },
+        {
+          badge: 'صورة تجربة',
+          type: 'photo',
+          title: 'تجربة اللعبة معًا',
+          note: 'متابعة اللعبة على الشاشة بينما تبقى الأسلاك موصولة تجعل الطاولة كلها جزءًا من التجربة، لا طالبًا واحدًا فقط.',
+          size: 'square',
+          tone: 'mist',
+        },
+        {
+          badge: 'صورة المكان',
+          type: 'photo',
+          title: 'داخل مساحة البناء',
+          note: 'المشهد الواسع يُظهر اللابتوبات المفتوحة والطاولات المزدحمة والحركة التي تصنع أجواء المسابقة في كل زاوية.',
+          size: 'banner',
+          tone: 'mist',
+        },
+        {
+          badge: 'مقطع فريق',
+          type: 'video',
+          title: 'لقطة سريعة من داخل المساحة',
+          note: 'هذا المقطع القصير يوضح كيف تتجمع الفرق تلقائيًا لتشرح التقدم وتشارك اللحظة مع من حولها.',
+          size: 'square',
+          tone: 'mint',
+          videoUrl: '/media/around-the-room/teams-inside-the-build-space.mp4',
+        },
+        {
+          badge: 'صورة تركيز',
+          type: 'photo',
+          title: 'تركيز هادئ أثناء البناء',
+          note: 'بعض أقوى لحظات القاعة تكون هادئة: طالبة تثبّت التوصيلات بينما يراقب الفريق الاستجابة التالية.',
+          size: 'story',
+          tone: 'sun',
+        },
+        {
+          badge: 'لحظة إرشاد',
+          type: 'photo',
+          title: 'من يقفون خلف المشروع',
+          note: 'أقوى لحظات القاعة كثيرًا ما تظهر في الوجوه المحيطة بالطاولة: من يشرحون، ومن ينصتون، ومن يساعدون الفكرة على أن تتقدم.',
+          size: 'square',
+          tone: 'peach',
+        },
+        {
+          badge: 'مقطع نموذج أولي',
+          type: 'video',
+          title: 'النسخة الأولى وهي تعمل',
+          note: 'مقطع سريع من الشاشة والعتاد يحول التقدم المبكر إلى شيء مرئي وقابل للاختبار ويسهل مشاركته.',
+          size: 'square',
+          tone: 'night',
+          videoUrl: '/media/around-the-room/first-version-in-motion.mp4',
+        },
+        {
+          badge: 'لقطة شاشة',
+          type: 'photo',
+          title: 'نتيجة النموذج على الشاشة',
+          note: 'اللقطة القريبة للنتيجة والسرعة وعدد المحاولات المتبقية تجعل الاختبار نفسه يبدو كإنجاز صغير ومرئي.',
+          size: 'square',
+          tone: 'night',
+        },
+        {
+          badge: 'صورة دارة',
+          type: 'photo',
+          title: 'أيدٍ على أدوات التحكم',
+          note: 'لوحة تجارب بسيطة وعدة أصابع دقيقة تكفي لتُظهر مقدار الانتباه الذي يدخل في كل تعديل صغير.',
+          size: 'square',
+          tone: 'sun',
         },
         {
           badge: 'مقطع خلف الكواليس',
           type: 'video',
           title: 'فيديوهات سريعة بين العروض',
           note: 'المشاهد القصيرة بين الفقرات الرسمية تكشف الشخصية الحقيقية للطلاب وحركة اليوم كما هي.',
+          size: 'banner',
+          tone: 'flash',
+          videoUrl: '/media/around-the-room/fast-demo-clips.mp4',
+        },
+        {
+          badge: 'مقطع إرشادي حي',
+          type: 'video',
+          title: 'شرح إرشادي أثناء الحركة',
+          note: 'هذا المقطع القصير من طاولة الإرشاد يلتقط نوع الشرح الذي يجعل القاعة كلها تتوقف للحظة وتنتبه.',
+          size: 'landscape',
+          tone: 'blue',
+          videoUrl: '/media/around-the-room/mentor-demo-in-motion.mp4',
+        },
+        {
+          badge: 'صورة ورشة',
+          type: 'photo',
+          title: 'رفع الحساس أمام الجميع',
+          note: 'قطعة صغيرة مرفوعة أمام العيون قادرة على تحويل الشرح النظري إلى شيء يمكن للجميع فهمه فورًا.',
+          size: 'story',
+          tone: 'sun',
+        },
+        {
+          badge: 'صورة دارة',
+          type: 'photo',
+          title: 'فحص توصيلات الشاشة',
+          note: 'الأسلاك والأسئلة وحركة الأيدي السريعة كلها تشير إلى شيء واحد: الطاولة نفسها تصبح جزءًا من الشرح.',
+          size: 'story',
+          tone: 'mist',
+        },
+        {
+          badge: 'صورة القاعة',
+          type: 'photo',
+          title: 'القاعة تتعلم معًا',
+          note: 'اللقطة الأوسع تُظهر كل طاولة وهي تختبر وتستمع وتبني في الوقت نفسه.',
+          size: 'story',
+          tone: 'peach',
+        },
+        {
+          badge: 'صورة تصحيح',
+          type: 'photo',
+          title: 'تصحيح الأعطال على طاولة مزدحمة',
+          note: 'الشاشات المفتوحة وأسلاك التوصيل المتناثرة والالتفاف حول الفكرة تكشف شكل التصحيح الحقيقي كما هو.',
           size: 'square',
           tone: 'night',
         },
         {
-          badge: 'صورة احتفال',
+          badge: 'صورة برمجة',
           type: 'photo',
-          title: 'لحظة يعرف فيها الفريق أن المشروع نجح',
-          note: 'الابتسامات والأيدي المرفوعة والفرح المشترك تصنع صورًا تبقى في الذاكرة بعد انتهاء اليوم.',
-          size: 'banner',
+          title: 'برمجة ثنائية على لابتوب واحد',
+          note: 'اقتراب طالبين من شاشة واحدة يكون أحيانًا كافيًا لتحريك فكرة متوقفة إلى الأمام.',
+          size: 'story',
+          tone: 'mint',
+        },
+        {
+          badge: 'صورة فريق',
+          type: 'photo',
+          title: 'طلاب يبرمجون جنبًا إلى جنب',
+          note: 'العمل كتفًا إلى كتف يجعل الحاسوب مساحة مشتركة لا مهمة فردية.',
+          size: 'story',
+          tone: 'mist',
+        },
+        {
+          badge: 'صورة الطاولة',
+          type: 'photo',
+          title: 'مشاركة الشاشة من كل زاوية',
+          note: 'حين يلتف عدة طلاب حول جهاز واحد، يتحول اللابتوب إلى نقطة عمل مشتركة للفريق كله.',
+          size: 'landscape',
+          tone: 'peach',
+        },
+        {
+          badge: 'صورة متصفح',
+          type: 'photo',
+          title: 'متابعة المسار عبر المتصفح',
+          note: 'أداة بسيطة على المتصفح قد تكون كافية لإطلاق الاختبار أو الإجابة أو الفكرة التالية.',
+          size: 'story',
+          tone: 'blue',
+        },
+        {
+          badge: 'صورة تركيز',
+          type: 'photo',
+          title: 'تركيز على التعديل التالي',
+          note: 'بعض التقدم يبدأ من دقيقة هادئة يحدق فيها الطالب في الشاشة قبل أن يقرر ما الذي سيغيره.',
+          size: 'story',
+          tone: 'sun',
+        },
+        {
+          badge: 'صورة إرشاد',
+          type: 'photo',
+          title: 'دائرة إرشاد صغيرة',
+          note: 'وقوف المرشد فوق مجموعة صغيرة قادر على إعادة توجيه الفريق كله في بضع جمل فقط.',
+          size: 'story',
+          tone: 'peach',
+        },
+        {
+          badge: 'صورة مراجعة',
+          type: 'photo',
+          title: 'مراجعة الشاشة معًا',
+          note: 'أحيانًا تكون الخطوة التالية مجرد أن يبطئ الجميع قليلًا ويقرأوا الكود سطرًا سطرًا.',
+          size: 'story',
+          tone: 'night',
+        },
+        {
+          badge: 'صورة كود',
+          type: 'photo',
+          title: 'قراءة الكود سطرًا سطرًا',
+          note: 'الشاشة المشتركة تصنع ذلك الصمت المركز الذي يجعل تفصيلة مفيدة تبدو فجأة واضحة للجميع.',
+          size: 'square',
+          tone: 'mint',
+        },
+        {
+          badge: 'صورة بايثون',
+          type: 'photo',
+          title: 'أول سطر بايثون على الشاشة',
+          note: 'رؤية أول ناتج بسيط لبايثون على الشاشة تمنح الطاولة كلها شيئًا ملموسًا تتفاعل معه.',
+          size: 'story',
+          tone: 'flash',
+        },
+        {
+          badge: 'صورة فريق البنات',
+          type: 'photo',
+          title: 'محاولة جديدة من طاولة البنات',
+          note: 'لهذه الطاولة إيقاعها الخاص: صبر وتركيز واستعداد لإعادة المحاولة حتى تنجح الفكرة.',
+          size: 'story',
+          tone: 'mist',
+        },
+        {
+          badge: 'صورة القاعة',
+          type: 'photo',
+          title: 'زاوية هادئة لا تزال تبني',
+          note: 'حتى بعيدًا عن مركز القاعة، يستمر الطلاب في البناء بإيقاعهم الهادئ والثابت.',
+          size: 'story',
           tone: 'sun',
         },
       ],
@@ -1059,6 +1437,14 @@ const content = {
       eyebrow: 'واجهة الفيديو',
       openLabel: 'افتح معاينة الفيديو',
       closeLabel: 'إغلاق المعاينة',
+      playerLabels: {
+        play: 'تشغيل الفيديو',
+        pause: 'إيقاف الفيديو',
+        progress: 'شريط تقدم الفيديو',
+        muteShort: 'كتم',
+        unmuteShort: 'تشغيل الصوت',
+        restartShort: 'إعادة',
+      },
       placeholderTitle: 'مقاطع المشاريع تستحق مساحة عرض خاصة بها',
       placeholderText:
         'هذه الواجهة جاهزة لعرض ديموهات الطلاب، وتجارب العرض، ولقطات المرشدين، واللحظات السريعة من مساحة العمل.',
@@ -1226,14 +1612,12 @@ const content = {
       cards: [
         {
           name: 'Tech From Palestine',
-          logo: techFromPalestineLogo,
           href: techFromPalestineUrl,
           body:
             'Tech From Palestine هي مؤسسة غير ربحية انطلقت من غزة لتوسيع الوصول إلى تعليم تكنولوجي عالي الجودة وفتح فرص عالمية أمام الشباب والمهندسين الفلسطينيين. ومن خلال التدريب العملي في البرمجة والروبوتات والإلكترونيات والأنظمة المدمجة، وبرامج مجتمعية مثل Tech Explorers وTech Teens، دعمت المؤسسة أكثر من 1000 مهندس، وربطت أكثر من 100 محترف بفرص دولية، وقدّمت لأكثر من 500 طفل ويافع مدخلًا عمليًا وآمنًا إلى عالم التكنولوجيا.',
         },
         {
           name: 'Code Sprouts Palestine',
-          logo: codeSproutsLogo,
           body:
             'تساعد Code Sprouts Palestine في تأسيس نوادٍ تطوعية للبرمجة من خلال تدريب المتطوعين وتوفير المواد التعليمية ودعم الأندية التي تُدار بشكل مستقل من فرقها المحلية. هذا النموذج اللامركزي يعزّز القيادة والتعلّم التعاوني والإبداع وملكية المجتمع للمبادرات، ويمنح الأطفال واليافعين مساحات مرحّبة لاستكشاف البرمجة وحل المشكلات والروبوتات والتكنولوجيا بثقة.',
         },
@@ -1290,6 +1674,7 @@ const content = {
       body:
         'يمكن لكل طلب أن يعرض صورة رئيسية واحدة وفيديو عرض قصيرًا وصورة من رحلة التنفيذ. هذا يمنح الحكام والزوار فهمًا بصريًا سريعًا للمشروع قبل قراءة التفاصيل.',
       notes: ['صورة الغلاف', 'فيديو العرض القصير', 'صورة من رحلة البناء'],
+      // Developer note: image fields now live in `src/config/siteImages.js`; keep `videoUrl` or `embedUrl` here only for video cards.
       cards: [
         {
           badge: 'صورة المشروع',
@@ -1598,7 +1983,7 @@ const content = {
       eyebrow: 'لوحة المنظمين',
       title: 'راجع الطلبات، حرّكها بين المراحل، وابقِ القصة الكاملة واضحة أمامك.',
       text:
-        'هذه اللوحة تعمل محليًا في المتصفح حاليًا، وتساعد الفريق على قراءة الردود، تتبع مراحل القبول، وتسجيل الملاحظات إلى أن تصبح المنصة الخلفية جاهزة.',
+        'هذه اللوحة الحية تقرأ الطلبات وملاحظات المنظمين والمشرفين ووسائط Around the room من باك إند Express المرتبط مع Mongo Atlas.',
       primary: 'افتح نموذج التقديم',
       stats: {
         total: 'الردود المحفوظة',
@@ -1615,7 +2000,7 @@ const content = {
       queueEmptyTitle: 'لا توجد ردود تطابق هذا الفلتر حاليًا',
       queueEmptyText: 'جرّب كلمة بحث أخرى أو بدّل مرحلة القبول.',
       emptyTitle: 'لم يتم حفظ أي طلبات بعد',
-      emptyText: 'بمجرد تجهيز طلب من النموذج سيظهر هنا تلقائيًا على هذا الجهاز.',
+      emptyText: 'بمجرد إرسال طلب من النموذج سيظهر هنا من الخادم لكل فريق التنظيم.',
       detailEyebrow: 'تفاصيل الطلب',
       detailTitle: 'محتوى الرد',
       stageLabel: 'مرحلة القبول',
@@ -1685,308 +2070,57 @@ const content = {
   },
 }
 
-function readStoredJson(key, fallback) {
-  const rawValue = window.localStorage.getItem(key)
+applyPageImages(content)
 
-  if (!rawValue) {
-    return fallback
-  }
-
-  try {
-    return JSON.parse(rawValue)
-  } catch {
-    return fallback
-  }
-}
-
-function getStoredSubmissions() {
-  const savedSubmissions = readStoredJson(submissionsStorageKey, [])
-
-  if (!Array.isArray(savedSubmissions)) {
-    return []
-  }
-
-  return savedSubmissions
-    .map((item) => ({
-      reviewStage: defaultReviewStage,
-      organizerNotes: '',
-      ...item,
-    }))
-    .sort((left, right) => {
-      const leftTime = new Date(left.updatedAt || left.createdAt || 0).getTime()
-      const rightTime = new Date(right.updatedAt || right.createdAt || 0).getTime()
-      return rightTime - leftTime
-    })
-}
-
-function saveStoredSubmissions(submissions) {
-  window.localStorage.setItem(submissionsStorageKey, JSON.stringify(submissions))
-}
-
-function createSubmissionId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID()
-  }
-
-  return `submission-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-}
-
-function getAgeDetails(ageValue) {
-  const numericAge = Number(ageValue)
-  const hasAge = Number.isFinite(numericAge) && numericAge > 0
-  const isEligible = hasAge && numericAge < 18
-  const isUnder13 = hasAge && numericAge < 13
-  const canSelfApply = hasAge && numericAge >= 13 && numericAge < 18
+function withMediaDeveloperMeta(item, objectPath) {
+  const isVideo = item.type === 'video'
 
   return {
-    numericAge,
-    hasAge,
-    isEligible,
-    isUnder13,
-    canSelfApply,
+    ...item,
+    developerImagePath: item.imageConfigPath || `src/App.jsx -> ${objectPath}`,
+    developerVideoPath: isVideo ? `src/App.jsx -> ${objectPath}` : '',
+    developerImageChecklist: isVideo
+      ? [
+          'This card thumbnail now lives in `src/config/siteImages.js`.',
+          'Set `image` and `imageAlt` there if you want a real video thumbnail.',
+        ]
+      : [
+          'Set `image` in `src/config/siteImages.js` to the asset you want to show.',
+          'Set `imageAlt` there so the card has real alt text.',
+          'Optional: set `imageFit: "contain"` there if the artwork should not crop.',
+        ],
+    developerVideoChecklist: isVideo
+      ? [
+          'Set `videoUrl` for MP4/WebM/OGG or `embedUrl` for YouTube/Vimeo.',
+          'Optional: set `videoPoster` if you want a custom preview frame in the modal.',
+        ]
+      : [],
   }
 }
 
-function getApplicationOwnerLabel(ownerId, formContent) {
-  const ownersById = Object.fromEntries(
-    (formContent.applicationPaths || []).map((item) => [item.id, item.label]),
+function attachMediaDeveloperMeta(languageKey, pageContent) {
+  const contentPath = `content.${languageKey}`
+
+  pageContent.hero.mediaCards = pageContent.hero.mediaCards.map((item, index) =>
+    withMediaDeveloperMeta(item, `${contentPath}.hero.mediaCards[${index}]`),
   )
-
-  return ownersById[ownerId] || formContent.missingApplicationOwner
-}
-
-function getAdditionalTeamMembers(formState, formContent) {
-  const members = []
-
-  if (formState.teamType === 'duo' || formState.teamType === 'trio') {
-    members.push({
-      id: 'teamMemberTwo',
-      title: formContent.teamMemberCards.secondTitle,
-      nameKey: 'teamMemberTwoName',
-      ageKey: 'teamMemberTwoAge',
-      cityKey: 'teamMemberTwoCity',
-      contactKey: 'teamMemberTwoContact',
-    })
-  }
-
-  if (formState.teamType === 'trio') {
-    members.push({
-      id: 'teamMemberThree',
-      title: formContent.teamMemberCards.thirdTitle,
-      nameKey: 'teamMemberThreeName',
-      ageKey: 'teamMemberThreeAge',
-      cityKey: 'teamMemberThreeCity',
-      contactKey: 'teamMemberThreeContact',
-    })
-  }
-
-  return members
-}
-
-function buildSubmissionSummary(formState, formContent, categoriesById, stagesById) {
-  const teamModesById = Object.fromEntries(
-    (formContent.teamModes || []).map((item) => [item.id, item.label]),
+  pageContent.mediaGallery.featured = withMediaDeveloperMeta(
+    pageContent.mediaGallery.featured,
+    `${contentPath}.mediaGallery.featured`,
   )
-  const ageDetails = getAgeDetails(formState.age)
-  const applicationOwner = ageDetails.isUnder13 ? 'adult' : formState.applicationOwner
-  const applicationOwnerLabel = getApplicationOwnerLabel(applicationOwner, formContent)
-  const additionalTeamMembers = getAdditionalTeamMembers(formState, formContent)
-
-  const lines = [
-    formContent.summaryTitle,
-    '',
-    `${formContent.summaryLabels.fullName}: ${formState.fullName}`,
-    `${formContent.summaryLabels.age}: ${formState.age}`,
-    `${formContent.summaryLabels.city}: ${formState.city}`,
-    `${formContent.summaryLabels.school}: ${formState.school || formContent.missingSchool}`,
-    `${formContent.summaryLabels.applicationOwner}: ${applicationOwnerLabel}`,
-    `${formContent.summaryLabels.teamType}: ${
-      teamModesById[formState.teamType] || formState.teamType || formContent.missingTeamType
-    }`,
-  ]
-
-  additionalTeamMembers.forEach((member) => {
-    lines.push(
-      '',
-      `${member.title}:`,
-      `${formContent.summaryLabels.fullName}: ${formState[member.nameKey]}`,
-      `${formContent.summaryLabels.age}: ${formState[member.ageKey]}`,
-      `${formContent.summaryLabels.city}: ${formState[member.cityKey]}`,
-      `${formContent.summaryLabels.teamMemberContact}: ${formState[member.contactKey]}`,
-    )
-  })
-
-  if (!additionalTeamMembers.length && isFilled(formState.teamMembers)) {
-    lines.push(`${formContent.summaryLabels.teamMembers}: ${formState.teamMembers}`)
-  }
-
-  if (applicationOwner === 'adult') {
-    if (isFilled(formState.adultRole)) {
-      lines.push(`${formContent.summaryLabels.adultRole}: ${formState.adultRole}`)
-    }
-
-    if (isFilled(formState.adultName)) {
-      lines.push(`${formContent.summaryLabels.adultName}: ${formState.adultName}`)
-    }
-  }
-
-  if (isFilled(formState.mentorName)) {
-    lines.push(`${formContent.summaryLabels.mentorName}: ${formState.mentorName}`)
-  }
-
-  if (isFilled(formState.mentorContact)) {
-    lines.push(`${formContent.summaryLabels.mentorContact}: ${formState.mentorContact}`)
-  }
-
-  lines.push(
-    `${formContent.summaryLabels.projectName}: ${formState.projectName}`,
-    `${formContent.summaryLabels.projectStage}: ${
-      stagesById[formState.projectStage] || formState.projectStage
-    }`,
-    `${formContent.summaryLabels.category}: ${
-      categoriesById[formState.category] || formState.category
-    }`,
-    `${formContent.summaryLabels.problem}: ${formState.problem}`,
-    '',
-    `${formContent.summaryLabels.description}:`,
-    formState.description,
-    '',
-    `${formContent.summaryLabels.recordingLink}: ${formState.recordingLink}`,
+  pageContent.mediaGallery.cards = pageContent.mediaGallery.cards.map((item, index) =>
+    withMediaDeveloperMeta(item, `${contentPath}.mediaGallery.cards[${index}]`),
   )
-
-  if (isFilled(formState.projectLink)) {
-    lines.push(`${formContent.summaryLabels.projectLink}: ${formState.projectLink}`)
-  }
-
-  lines.push(`${formContent.summaryLabels.contact}: ${formState.contact}`)
-
-  return lines.join('\n')
+  pageContent.mediaMoments.cards = pageContent.mediaMoments.cards.map((item, index) =>
+    withMediaDeveloperMeta(item, `${contentPath}.mediaMoments.cards[${index}]`),
+  )
+  pageContent.contactMedia.cards = pageContent.contactMedia.cards.map((item, index) =>
+    withMediaDeveloperMeta(item, `${contentPath}.contactMedia.cards[${index}]`),
+  )
 }
 
-function formatSubmissionDate(dateValue, language) {
-  if (!dateValue) {
-    return '—'
-  }
-
-  const date = new Date(dateValue)
-
-  if (Number.isNaN(date.getTime())) {
-    return '—'
-  }
-
-  return new Intl.DateTimeFormat(language === 'ar' ? 'ar' : 'en', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date)
-}
-
-function parseHash() {
-  const rawHash = window.location.hash.replace('#', '')
-
-  if (!rawHash) {
-    return { page: 'home', section: '' }
-  }
-
-  const [page, section = ''] = rawHash.split(':')
-
-  return {
-    page: ['home', 'contact', 'dashboard'].includes(page) ? page : 'home',
-    section,
-  }
-}
-
-function scrollToRoute(section) {
-  if (!section) {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    return
-  }
-
-  const target = document.getElementById(section)
-
-  if (target) {
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-}
-
-function getPreferredLanguage() {
-  const languageFromUrl = new URLSearchParams(window.location.search).get('lang')
-
-  if (languageFromUrl === 'ar' || languageFromUrl === 'en') {
-    return languageFromUrl
-  }
-
-  const savedLanguage = window.localStorage.getItem(languageStorageKey)
-
-  if (savedLanguage === 'ar' || savedLanguage === 'en') {
-    return savedLanguage
-  }
-
-  return navigator.language.toLowerCase().startsWith('ar') ? 'ar' : 'en'
-}
-
-function buildLanguageHref(nextLanguage) {
-  const hash = window.location.hash || '#home'
-  return `?lang=${nextLanguage}${hash}`
-}
-
-function isFilled(value) {
-  return String(value ?? '').trim().length > 0
-}
-
-function getVideoPreviewSource(item) {
-  if (!item || item.type !== 'video') {
-    return { kind: 'placeholder' }
-  }
-
-  if (item.embedUrl) {
-    return { kind: 'embed', src: item.embedUrl }
-  }
-
-  if (!item.videoUrl) {
-    return { kind: 'placeholder' }
-  }
-
-  try {
-    const parsedUrl = new URL(item.videoUrl)
-    const hostname = parsedUrl.hostname.replace(/^www\./, '')
-
-    if (hostname === 'youtu.be') {
-      const videoId = parsedUrl.pathname.replace('/', '')
-
-      if (videoId) {
-        return { kind: 'embed', src: `https://www.youtube-nocookie.com/embed/${videoId}` }
-      }
-    }
-
-    if (hostname.includes('youtube.com')) {
-      const videoId = parsedUrl.searchParams.get('v')
-
-      if (videoId) {
-        return { kind: 'embed', src: `https://www.youtube-nocookie.com/embed/${videoId}` }
-      }
-    }
-
-    if (hostname === 'vimeo.com') {
-      const videoId = parsedUrl.pathname.split('/').filter(Boolean)[0]
-
-      if (videoId) {
-        return { kind: 'embed', src: `https://player.vimeo.com/video/${videoId}` }
-      }
-    }
-
-    if (/\.(mp4|webm|ogg)$/i.test(parsedUrl.pathname)) {
-      return { kind: 'file', src: item.videoUrl }
-    }
-
-    return { kind: 'external', src: item.videoUrl }
-  } catch {
-    if (/\.(mp4|webm|ogg)$/i.test(item.videoUrl)) {
-      return { kind: 'file', src: item.videoUrl }
-    }
-
-    return { kind: 'external', src: item.videoUrl }
-  }
-}
+attachMediaDeveloperMeta('en', content.en)
+attachMediaDeveloperMeta('ar', content.ar)
 
 function App() {
   const [route, setCurrentRoute] = useState(() => parseHash())
@@ -2058,6 +2192,7 @@ function App() {
         {route.page === 'home' ? (
           <HomePage
             content={pageContent}
+            language={language}
             onNavigate={handleNavigate}
             onOpenVideo={setActiveVideoItem}
           />
@@ -2066,6 +2201,7 @@ function App() {
         ) : (
           <ContactPage
             content={pageContent}
+            language={language}
             onNavigate={handleNavigate}
             onOpenVideo={setActiveVideoItem}
           />
@@ -2080,2515 +2216,6 @@ function App() {
         onClose={() => setActiveVideoItem(null)}
       />
     </div>
-  )
-}
-
-function PartnerLogoBadge({ logo, alt, name, href, variant, className = '' }) {
-  const classes = ['partner-logo-badge', `partner-logo-badge--${variant}`, className]
-    .filter(Boolean)
-    .join(' ')
-
-  const image = <img className="partner-logo-badge__image" src={logo} alt={alt} />
-
-  if (href) {
-    return (
-      <a className={classes} href={href} aria-label={`Visit ${name}`}>
-        {image}
-      </a>
-    )
-  }
-
-  return <div className={classes}>{image}</div>
-}
-
-function SiteHeader({
-  content,
-  currentLanguage,
-  route,
-  menuOpen,
-  onNavigate,
-  onToggleMenu,
-}) {
-  const navItems = [
-    { label: content.nav.home, page: 'home', section: '' },
-    { label: content.nav.tracks, page: 'home', section: 'tracks' },
-    { label: content.nav.partners, page: 'home', section: 'partners' },
-    { label: content.nav.faq, page: 'home', section: 'faq' },
-    { label: content.nav.contact, page: 'contact', section: '' },
-    { label: content.nav.dashboard, page: 'dashboard', section: '' },
-  ]
-
-  return (
-    <header className="site-header">
-      <div className="container nav-bar">
-        <div className="brand">
-          <div className="brand-stack">
-            <button
-              type="button"
-              className="brand-home"
-              onClick={() => onNavigate('home')}
-              aria-label={content.nav.home}
-            >
-              <div className="brand-copy">
-                <span className="brand-kicker">{content.brandKicker}</span>
-                <strong>{content.brandTitle}</strong>
-              </div>
-            </button>
-
-            <div className="brand-logos">
-              <PartnerLogoBadge
-                logo={codeSproutsLogo}
-                alt="Code Sprouts Palestine logo"
-                name="Code Sprouts Palestine"
-                variant="nav"
-              />
-              <PartnerLogoBadge
-                logo={techFromPalestineLogo}
-                alt="Tech From Palestine logo"
-                name="Tech From Palestine"
-                href={techFromPalestineUrl}
-                variant="nav"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="header-actions">
-          <div className="language-switcher" aria-label="Language switcher">
-            <a
-              className={`language-chip ${currentLanguage === 'en' ? 'is-active' : ''}`}
-              href={buildLanguageHref('en')}
-            >
-              {content.languageSwitch.en}
-            </a>
-            <a
-              className={`language-chip ${currentLanguage === 'ar' ? 'is-active' : ''}`}
-              href={buildLanguageHref('ar')}
-            >
-              {content.languageSwitch.ar}
-            </a>
-          </div>
-
-          <button
-            type="button"
-            className="menu-button"
-            onClick={onToggleMenu}
-            aria-expanded={menuOpen}
-            aria-label="Toggle navigation"
-          >
-            <span />
-            <span />
-            <span />
-          </button>
-        </div>
-
-        <nav className={`site-nav ${menuOpen ? 'is-open' : ''}`} aria-label="Primary navigation">
-          {navItems.map((item) => (
-            <button
-              key={`${item.page}-${item.section || 'root'}`}
-              type="button"
-              className={`nav-link ${
-                route.page === item.page && (!item.section || route.section === item.section)
-                  ? 'is-active'
-                  : ''
-              }`}
-              onClick={() => onNavigate(item.page, item.section)}
-              aria-current={
-                route.page === item.page && (!item.section || route.section === item.section)
-                  ? 'page'
-                  : undefined
-              }
-            >
-              {item.label}
-            </button>
-          ))}
-
-          <button
-            type="button"
-            className="nav-cta"
-            onClick={() => onNavigate('contact', 'apply')}
-          >
-            {content.nav.apply}
-          </button>
-        </nav>
-      </div>
-    </header>
-  )
-}
-
-function HomePage({ content, onNavigate, onOpenVideo }) {
-  return (
-    <>
-      <section className="hero">
-        <div className="container hero-grid">
-          <div className="hero-copy">
-            <span className="eyebrow">{content.hero.eyebrow}</span>
-            <h1>{content.hero.title}</h1>
-            <p className="hero-text">{content.hero.text}</p>
-
-            <div className="hero-actions">
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => onNavigate('contact', 'apply')}
-              >
-                {content.hero.primary}
-              </button>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => onNavigate('home', 'tracks')}
-              >
-                {content.hero.secondary}
-              </button>
-            </div>
-
-            <div className="hero-stats">
-              {content.hero.stats.map((item) => (
-                <StatCard key={`${item.value}-${item.label}`} value={item.value} label={item.label} />
-              ))}
-            </div>
-          </div>
-
-          <div className="hero-panel">
-            <div className="hero-logo-card">
-              <div className="orbit-topline">
-                <span className="tiny-badge">{content.hero.badges[0]}</span>
-                <span className="tiny-badge tiny-badge--warm">{content.hero.badges[1]}</span>
-              </div>
-
-              <HackathonLockup content={content} variant="hero" />
-
-              <h2>{content.hero.panelTitle}</h2>
-              <p>{content.hero.panelText}</p>
-
-              <div className="pillar-grid">
-                {content.hero.pillars.map((pillar) => (
-                  <span key={pillar} className="pillar-chip">
-                    {pillar}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="hero-media-strip" aria-label={content.mediaGallery.title}>
-              {content.hero.mediaCards.map((item) => (
-                <MediaSlotCard
-                  key={item.title}
-                  item={item}
-                  compact
-                  onOpenVideo={onOpenVideo}
-                  videoActionLabel={content.mediaModal.openLabel}
-                />
-              ))}
-            </div>
-
-            <div className="logo-float logo-float--left">
-              <PartnerLogoBadge
-                logo={codeSproutsLogo}
-                alt="Code Sprouts Palestine logo"
-                name="Code Sprouts Palestine"
-                variant="float"
-              />
-            </div>
-            <div className="logo-float logo-float--right">
-              <PartnerLogoBadge
-                logo={techFromPalestineLogo}
-                alt="Tech From Palestine logo"
-                name="Tech From Palestine"
-                href={techFromPalestineUrl}
-                variant="float"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section section--visual" id="gallery">
-        <div className="container visual-story-layout visual-story-layout--gallery">
-          <div className="visual-story-copy">
-            <SectionTitle
-              eyebrow={content.mediaGallery.eyebrow}
-              title={content.mediaGallery.title}
-              body={content.mediaGallery.body}
-            />
-
-            <div className="visual-chip-row">
-              {content.mediaGallery.notes.map((item) => (
-                <span key={item} className="visual-chip">
-                  {item}
-                </span>
-              ))}
-            </div>
-
-            <article className="gallery-support-card">
-              <span className="gallery-support-card__badge">{content.mediaGallery.support.badge}</span>
-              <h3>{content.mediaGallery.support.title}</h3>
-              <p>{content.mediaGallery.support.body}</p>
-
-              <div className="gallery-support-list">
-                {content.mediaGallery.support.steps.map((item) => (
-                  <div key={item} className="gallery-support-step">
-                    <span className="gallery-support-step__dot" aria-hidden="true" />
-                    <strong>{item}</strong>
-                  </div>
-                ))}
-              </div>
-            </article>
-          </div>
-
-          <div className="visual-storyboard visual-storyboard--gallery">
-            <MediaSlotCard
-              item={content.mediaGallery.featured}
-              variant="gallery"
-              onOpenVideo={onOpenVideo}
-              videoActionLabel={content.mediaModal.openLabel}
-            />
-            {content.mediaGallery.cards.map((item) => (
-              <MediaSlotCard
-                key={item.title}
-                item={item}
-                variant="gallery"
-                onOpenVideo={onOpenVideo}
-                videoActionLabel={content.mediaModal.openLabel}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section section--media-burst" id="moments">
-        <div className="container">
-          <div className="moments-head">
-            <SectionTitle
-              eyebrow={content.mediaMoments.eyebrow}
-              title={content.mediaMoments.title}
-              body={content.mediaMoments.body}
-              inverted
-            />
-
-            <div className="visual-chip-row visual-chip-row--inverted">
-              {content.mediaMoments.notes.map((item) => (
-                <span key={item} className="visual-chip visual-chip--inverted">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="visual-storyboard visual-storyboard--moments">
-            {content.mediaMoments.cards.map((item) => (
-              <MediaSlotCard
-                key={item.title}
-                item={item}
-                variant="moments"
-                onOpenVideo={onOpenVideo}
-                videoActionLabel={content.mediaModal.openLabel}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section" id="about">
-        <div className="container">
-          <SectionTitle
-            eyebrow={content.about.eyebrow}
-            title={content.about.title}
-            body={content.about.body}
-          />
-
-          <div className="feature-grid">
-            {content.about.cards.map((card) => (
-              <FeatureCard key={card.title} title={card.title} body={card.body} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section section--tinted">
-        <div className="container">
-          <SectionTitle
-            eyebrow={content.whyJoin.eyebrow}
-            title={content.whyJoin.title}
-            body={content.whyJoin.body}
-          />
-
-          <div className="feature-grid">
-            {content.whyJoin.cards.map((card) => (
-              <FeatureCard key={card.title} title={card.title} body={card.body} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section section--soft" id="tracks">
-        <div className="container">
-          <SectionTitle
-            eyebrow={content.tracks.eyebrow}
-            title={content.tracks.title}
-            body={content.tracks.body}
-          />
-
-          <div className="track-grid">
-            {content.tracks.cards.map((track) => (
-              <article key={track.title} className="track-card">
-                <span className="card-eyebrow">{track.eyebrow}</span>
-                <h3>{track.title}</h3>
-                <p>{track.body}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section section--tinted">
-        <div className="container">
-          <SectionTitle
-            eyebrow={content.experience.eyebrow}
-            title={content.experience.title}
-            body={content.experience.body}
-          />
-
-          <div className="showcase-grid">
-            {content.experience.cards.map((item) => (
-              <article key={item.title} className="feature-card feature-card--showcase">
-                <span className="card-eyebrow">{item.eyebrow}</span>
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="container story-layout">
-          <div>
-            <SectionTitle
-              eyebrow={content.submit.eyebrow}
-              title={content.submit.title}
-              body={content.submit.body}
-            />
-          </div>
-
-          <div className="steps-card">
-            {content.submit.steps.map((step, index) => (
-              <div key={step} className="step-row">
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <p>{step}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section section--dark">
-        <div className="container">
-          <SectionTitle
-            eyebrow={content.judging.eyebrow}
-            title={content.judging.title}
-            body={content.judging.body}
-            inverted
-          />
-
-          <div className="timeline-grid judging-grid">
-            {content.judging.cards.map((item) => (
-              <article key={item.title} className="timeline-card">
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="container">
-          <SectionTitle
-            eyebrow={content.timeline.eyebrow}
-            title={content.timeline.title}
-            body={content.timeline.body}
-          />
-
-          <div className="timeline-grid">
-            {content.timeline.cards.map((item) => (
-              <article key={item.title} className="timeline-card timeline-card--light">
-                <span className="card-eyebrow">{item.phase}</span>
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section" id="partners">
-        <div className="container">
-          <SectionTitle
-            eyebrow={content.partners.eyebrow}
-            title={content.partners.title}
-            body={content.partners.body}
-          />
-
-          <div className="partner-grid">
-            {content.partners.cards.map((partner) => (
-              <article key={partner.name} className="partner-card">
-                <PartnerLogoBadge
-                  logo={partner.logo}
-                  alt={`${partner.name} logo`}
-                  name={partner.name}
-                  href={partner.href}
-                  variant="partner"
-                />
-                <div>
-                  <h3>{partner.name}</h3>
-                  <p>{partner.body}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section section--tinted" id="faq">
-        <div className="container">
-          <SectionTitle
-            eyebrow={content.faq.eyebrow}
-            title={content.faq.title}
-            body={content.faq.body}
-          />
-
-          <div className="faq-grid">
-            {content.faq.items.map((item) => (
-              <article key={item.question} className="faq-card">
-                <h3>{item.question}</h3>
-                <p>{item.answer}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section cta-section">
-        <div className="container cta-band">
-          <div>
-            <span className="eyebrow">{content.cta.eyebrow}</span>
-            <h2>{content.cta.title}</h2>
-            <p>{content.cta.body}</p>
-          </div>
-
-          <div className="cta-logo-wrap">
-            <HackathonLockup content={content} variant="compact" />
-            <button
-              type="button"
-              className="primary-button"
-              onClick={() => onNavigate('contact', 'apply')}
-            >
-              {content.cta.button}
-            </button>
-          </div>
-        </div>
-      </section>
-    </>
-  )
-}
-
-function ContactPage({ content, onNavigate, onOpenVideo }) {
-  return (
-    <>
-      <section className="contact-hero">
-        <div className="container contact-hero-grid">
-          <div className="contact-hero-copy">
-            <span className="eyebrow">{content.contactHero.eyebrow}</span>
-            <h1>{content.contactHero.title}</h1>
-            <p className="hero-text">{content.contactHero.text}</p>
-
-            <div className="hero-actions">
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => onNavigate('contact', 'apply')}
-              >
-                {content.contactHero.primary}
-              </button>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => onNavigate('home')}
-              >
-                {content.contactHero.secondary}
-              </button>
-            </div>
-          </div>
-
-          <div className="contact-brand-card">
-            <HackathonLockup content={content} variant="section" />
-            <div className="fact-grid">
-              {content.contactHero.facts.map((fact) => (
-                <div key={fact.label} className="fact-chip">
-                  <strong>{fact.label}</strong>
-                  <span>{fact.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section section--soft">
-        <div className="container visual-story-layout visual-story-layout--contact">
-          <div className="visual-story-copy">
-            <SectionTitle
-              eyebrow={content.contactMedia.eyebrow}
-              title={content.contactMedia.title}
-              body={content.contactMedia.body}
-            />
-
-            <div className="visual-chip-row">
-              {content.contactMedia.notes.map((item) => (
-                <span key={item} className="visual-chip">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="media-workbench-grid">
-            {content.contactMedia.cards.map((item) => (
-              <MediaSlotCard
-                key={item.title}
-                item={item}
-                onOpenVideo={onOpenVideo}
-                videoActionLabel={content.mediaModal.openLabel}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section" id="apply">
-        <div className="container application-hub">
-          <aside className="prep-panel">
-            <SectionTitle
-              eyebrow={content.prep.eyebrow}
-              title={content.prep.title}
-              body={content.prep.body}
-            />
-
-            <article className="prep-card">
-              <h3>{content.prep.checklistTitle}</h3>
-              <ul className="prep-list">
-                {content.prep.checklist.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-
-            <article className="prep-card">
-              <h3>{content.prep.standoutTitle}</h3>
-              <ul className="prep-list">
-                {content.prep.standout.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-
-            <article className="prep-card prep-card--accent">
-              <h3>{content.prep.eligibilityTitle}</h3>
-              <ul className="prep-list">
-                {content.prep.eligibility.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-          </aside>
-
-          <div className="application-column">
-            <div className="contact-card-list contact-card-list--wide">
-              {content.submit.steps.map((step, index) => (
-                <article key={step} className="contact-card contact-card--numbered">
-                  <span>{String(index + 1).padStart(2, '0')}</span>
-                  <p>{step}</p>
-                </article>
-              ))}
-            </div>
-
-            <ApplicationForm content={content} />
-          </div>
-        </div>
-      </section>
-    </>
-  )
-}
-
-function DashboardPage({ content, language, onNavigate }) {
-  const [submissions, setSubmissions] = useState(() => getStoredSubmissions())
-  const [selectedId, setSelectedId] = useState(() => getStoredSubmissions()[0]?.id || '')
-  const [stageFilter, setStageFilter] = useState('all')
-  const [searchValue, setSearchValue] = useState('')
-  const [notesDraft, setNotesDraft] = useState('')
-  const [feedback, setFeedback] = useState('')
-
-  const categoriesById = useMemo(
-    () => Object.fromEntries(content.form.categories.map((item) => [item.id, item.label])),
-    [content.form.categories],
-  )
-  const projectStagesById = useMemo(
-    () => Object.fromEntries(content.form.stages.map((item) => [item.id, item.label])),
-    [content.form.stages],
-  )
-  const teamModesById = useMemo(
-    () => Object.fromEntries(content.form.teamModes.map((item) => [item.id, item.label])),
-    [content.form.teamModes],
-  )
-  const reviewStagesById = useMemo(
-    () =>
-      Object.fromEntries(content.dashboard.reviewStages.map((item) => [item.id, item.label])),
-    [content.dashboard.reviewStages],
-  )
-
-  useEffect(() => {
-    const syncSubmissions = () => {
-      setSubmissions(getStoredSubmissions())
-    }
-
-    window.addEventListener('storage', syncSubmissions)
-    window.addEventListener('focus', syncSubmissions)
-
-    return () => {
-      window.removeEventListener('storage', syncSubmissions)
-      window.removeEventListener('focus', syncSubmissions)
-    }
-  }, [])
-
-  const filteredSubmissions = useMemo(() => {
-    const normalizedSearch = searchValue.trim().toLowerCase()
-
-    return submissions.filter((submission) => {
-      const matchesStage =
-        stageFilter === 'all' || submission.reviewStage === stageFilter
-
-      if (!matchesStage) {
-        return false
-      }
-
-      if (!normalizedSearch) {
-        return true
-      }
-
-      return [
-        submission.fullName,
-        submission.projectName,
-        submission.city,
-        submission.school,
-        submission.contact,
-        submission.teamMembers,
-        submission.teamMemberTwoName,
-        submission.teamMemberTwoAge,
-        submission.teamMemberTwoCity,
-        submission.teamMemberTwoContact,
-        submission.teamMemberThreeName,
-        submission.teamMemberThreeAge,
-        submission.teamMemberThreeCity,
-        submission.teamMemberThreeContact,
-        submission.adultRole,
-        submission.adultName,
-        submission.mentorName,
-        submission.mentorContact,
-        categoriesById[submission.category] || '',
-      ].some((value) => String(value || '').toLowerCase().includes(normalizedSearch))
-    })
-  }, [categoriesById, searchValue, stageFilter, submissions])
-
-  useEffect(() => {
-    if (!selectedId && filteredSubmissions[0]) {
-      setSelectedId(filteredSubmissions[0].id)
-      return
-    }
-
-    if (
-      filteredSubmissions.length > 0 &&
-      !filteredSubmissions.some((submission) => submission.id === selectedId)
-    ) {
-      setSelectedId(filteredSubmissions[0].id)
-    }
-  }, [filteredSubmissions, selectedId])
-
-  const selectedSubmission =
-    filteredSubmissions.find((submission) => submission.id === selectedId) ||
-    filteredSubmissions[0] ||
-    null
-  const selectedAdditionalTeamMembers = selectedSubmission
-    ? getAdditionalTeamMembers(selectedSubmission, content.form)
-    : []
-
-  useEffect(() => {
-    setNotesDraft(selectedSubmission?.organizerNotes || '')
-    setFeedback('')
-  }, [selectedSubmission?.id])
-
-  const persistSubmissions = (updater) => {
-    setSubmissions((current) => {
-      const nextSubmissions =
-        typeof updater === 'function' ? updater(current) : updater
-
-      saveStoredSubmissions(nextSubmissions)
-      return nextSubmissions
-    })
-  }
-
-  const handleStageChange = (submissionId, reviewStage) => {
-    persistSubmissions((current) =>
-      current
-        .map((submission) =>
-          submission.id === submissionId
-            ? {
-                ...submission,
-                reviewStage,
-                updatedAt: new Date().toISOString(),
-              }
-            : submission,
-        )
-        .sort(
-          (left, right) =>
-            new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime(),
-        ),
-    )
-  }
-
-  const handleSaveNotes = () => {
-    if (!selectedSubmission) {
-      return
-    }
-
-    persistSubmissions((current) =>
-      current
-        .map((submission) =>
-          submission.id === selectedSubmission.id
-            ? {
-                ...submission,
-                organizerNotes: notesDraft,
-                updatedAt: new Date().toISOString(),
-              }
-            : submission,
-        )
-        .sort(
-          (left, right) =>
-            new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime(),
-        ),
-    )
-    setFeedback(content.dashboard.feedback.notesSaved)
-  }
-
-  const handleCopySummary = async () => {
-    if (!selectedSubmission) {
-      return
-    }
-
-    try {
-      await navigator.clipboard.writeText(
-        buildSubmissionSummary(selectedSubmission, content.form, categoriesById, projectStagesById),
-      )
-      setFeedback(content.dashboard.feedback.copied)
-    } catch {
-      setFeedback(content.dashboard.feedback.blocked)
-    }
-  }
-
-  const stats = [
-    {
-      label: content.dashboard.stats.total,
-      value: submissions.length,
-    },
-    {
-      label: content.dashboard.stats.pending,
-      value: submissions.filter((submission) =>
-        ['submitted', 'reviewing'].includes(submission.reviewStage),
-      ).length,
-    },
-    {
-      label: content.dashboard.stats.shortlisted,
-      value: submissions.filter((submission) => submission.reviewStage === 'shortlisted').length,
-    },
-    {
-      label: content.dashboard.stats.accepted,
-      value: submissions.filter((submission) => submission.reviewStage === 'accepted').length,
-    },
-  ]
-
-  return (
-    <>
-      <section className="dashboard-hero">
-        <div className="container dashboard-hero-grid">
-          <div>
-            <span className="eyebrow">{content.dashboard.eyebrow}</span>
-            <h1>{content.dashboard.title}</h1>
-            <p className="hero-text">{content.dashboard.text}</p>
-
-            <div className="hero-actions">
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => onNavigate('contact', 'apply')}
-              >
-                {content.dashboard.primary}
-              </button>
-            </div>
-          </div>
-
-          <div className="dashboard-stat-grid">
-            {stats.map((item) => (
-              <article key={item.label} className="dashboard-stat-card">
-                <strong>{item.value}</strong>
-                <span>{item.label}</span>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section section--soft">
-        <div className="container dashboard-layout">
-          <aside className="dashboard-sidebar">
-            <article className="dashboard-panel">
-              <div className="panel-header">
-                <div>
-                  <span className="card-eyebrow">{content.dashboard.filtersTitle}</span>
-                  <h2>{content.dashboard.queueTitle}</h2>
-                </div>
-                <p>{content.dashboard.queueText}</p>
-              </div>
-
-              <label className="field">
-                <span>{content.dashboard.searchLabel}</span>
-                <input
-                  value={searchValue}
-                  onChange={(event) => setSearchValue(event.target.value)}
-                  placeholder={content.dashboard.searchPlaceholder}
-                />
-              </label>
-
-              <div className="filter-chip-row">
-                <button
-                  type="button"
-                  className={`filter-chip ${stageFilter === 'all' ? 'is-active' : ''}`}
-                  onClick={() => setStageFilter('all')}
-                >
-                  {content.dashboard.allStages}
-                </button>
-                {content.dashboard.reviewStages.map((stage) => (
-                  <button
-                    key={stage.id}
-                    type="button"
-                    className={`filter-chip ${stageFilter === stage.id ? 'is-active' : ''}`}
-                    onClick={() => setStageFilter(stage.id)}
-                  >
-                    {stage.label}
-                  </button>
-                ))}
-              </div>
-            </article>
-
-            <article className="dashboard-panel dashboard-panel--queue">
-              {filteredSubmissions.length ? (
-                <div className="dashboard-queue">
-                  {filteredSubmissions.map((submission) => (
-                    <button
-                      key={submission.id}
-                      type="button"
-                      className={`queue-item ${
-                        selectedSubmission?.id === submission.id ? 'is-active' : ''
-                      }`}
-                      onClick={() => setSelectedId(submission.id)}
-                    >
-                      <div className="queue-item__head">
-                        <strong>{submission.projectName}</strong>
-                        <span
-                          className={`review-stage-badge review-stage-badge--${submission.reviewStage}`}
-                        >
-                          {reviewStagesById[submission.reviewStage] || submission.reviewStage}
-                        </span>
-                      </div>
-                      <p>{submission.fullName}</p>
-                      <div className="queue-item__meta">
-                        <span>{submission.city}</span>
-                        <span>{categoriesById[submission.category] || submission.category}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="dashboard-empty dashboard-empty--compact">
-                  <h3>{content.dashboard.queueEmptyTitle}</h3>
-                  <p>{content.dashboard.queueEmptyText}</p>
-                </div>
-              )}
-            </article>
-          </aside>
-
-          <section className="dashboard-detail">
-            {selectedSubmission ? (
-              <>
-                <article className="dashboard-panel dashboard-panel--detail">
-                  <div className="dashboard-detail-head">
-                    <div>
-                      <span className="card-eyebrow">{content.dashboard.detailEyebrow}</span>
-                      <h2>{selectedSubmission.projectName}</h2>
-                      <p>
-                        {selectedSubmission.fullName} • {selectedSubmission.age}
-                      </p>
-                    </div>
-                    <span
-                      className={`review-stage-badge review-stage-badge--${selectedSubmission.reviewStage}`}
-                    >
-                      {reviewStagesById[selectedSubmission.reviewStage] ||
-                        selectedSubmission.reviewStage}
-                    </span>
-                  </div>
-
-                  <div className="dashboard-meta-grid">
-                    <div className="dashboard-meta-item">
-                      <span>{content.form.summaryLabels.category}</span>
-                      <strong>
-                        {categoriesById[selectedSubmission.category] || selectedSubmission.category}
-                      </strong>
-                    </div>
-                    <div className="dashboard-meta-item">
-                      <span>{content.dashboard.projectStageLabel}</span>
-                      <strong>
-                        {projectStagesById[selectedSubmission.projectStage] ||
-                          selectedSubmission.projectStage}
-                      </strong>
-                    </div>
-                    <div className="dashboard-meta-item">
-                      <span>{content.dashboard.submittedAt}</span>
-                      <strong>
-                        {formatSubmissionDate(selectedSubmission.createdAt, language)}
-                      </strong>
-                    </div>
-                    <div className="dashboard-meta-item">
-                      <span>{content.dashboard.updatedAt}</span>
-                      <strong>
-                        {formatSubmissionDate(selectedSubmission.updatedAt, language)}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div className="dashboard-stage-block">
-                    <div className="selection-heading">
-                      <strong>{content.dashboard.stageLabel}</strong>
-                    </div>
-                    <div className="review-stage-grid">
-                      {content.dashboard.reviewStages.map((stage) => (
-                        <button
-                          key={stage.id}
-                          type="button"
-                          className={`review-stage-card ${
-                            selectedSubmission.reviewStage === stage.id ? 'is-selected' : ''
-                          }`}
-                          onClick={() => handleStageChange(selectedSubmission.id, stage.id)}
-                        >
-                          <strong>{stage.label}</strong>
-                          <span>{stage.description}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </article>
-
-                <div className="dashboard-card-grid">
-                  <article className="dashboard-panel dashboard-panel--response">
-                    <span className="card-eyebrow">{content.dashboard.responsesTitle}</span>
-                    <div className="response-block">
-                      <h3>{content.form.summaryLabels.problem}</h3>
-                      <p>{selectedSubmission.problem}</p>
-                    </div>
-                    <div className="response-block">
-                      <h3>{content.form.summaryLabels.description}</h3>
-                      <p>{selectedSubmission.description}</p>
-                    </div>
-                    <div className="response-inline-grid">
-                      <div className="dashboard-meta-item">
-                        <span>{content.form.summaryLabels.applicationOwner}</span>
-                        <strong>
-                          {getApplicationOwnerLabel(
-                            getAgeDetails(selectedSubmission.age).isUnder13
-                              ? 'adult'
-                              : selectedSubmission.applicationOwner,
-                            content.form,
-                          )}
-                        </strong>
-                      </div>
-                      <div className="dashboard-meta-item">
-                        <span>{content.form.summaryLabels.contact}</span>
-                        <strong>{selectedSubmission.contact}</strong>
-                      </div>
-                      <div className="dashboard-meta-item">
-                        <span>{content.form.summaryLabels.teamType}</span>
-                        <strong>
-                          {teamModesById[selectedSubmission.teamType] ||
-                            selectedSubmission.teamType ||
-                            content.form.missingTeamType}
-                        </strong>
-                      </div>
-                      <div className="dashboard-meta-item">
-                        <span>{content.form.summaryLabels.school}</span>
-                        <strong>
-                          {selectedSubmission.school || content.form.missingSchool}
-                        </strong>
-                      </div>
-                    </div>
-                    {selectedAdditionalTeamMembers.length ? (
-                      <div className="team-member-stack team-member-stack--compact">
-                        {selectedAdditionalTeamMembers.map((member) => (
-                          <article key={member.id} className="team-member-card">
-                            <div className="team-member-card__head">
-                              <strong>{member.title}</strong>
-                            </div>
-                            <div className="response-inline-grid">
-                              <div className="dashboard-meta-item">
-                                <span>{content.form.summaryLabels.fullName}</span>
-                                <strong>{selectedSubmission[member.nameKey] || '—'}</strong>
-                              </div>
-                              <div className="dashboard-meta-item">
-                                <span>{content.form.summaryLabels.age}</span>
-                                <strong>{selectedSubmission[member.ageKey] || '—'}</strong>
-                              </div>
-                              <div className="dashboard-meta-item">
-                                <span>{content.form.summaryLabels.city}</span>
-                                <strong>{selectedSubmission[member.cityKey] || '—'}</strong>
-                              </div>
-                              <div className="dashboard-meta-item">
-                                <span>{content.form.summaryLabels.teamMemberContact}</span>
-                                <strong>{selectedSubmission[member.contactKey] || '—'}</strong>
-                              </div>
-                            </div>
-                          </article>
-                        ))}
-                      </div>
-                    ) : selectedSubmission.teamMembers ? (
-                      <div className="response-block">
-                        <h3>{content.form.summaryLabels.teamMembers}</h3>
-                        <p>{selectedSubmission.teamMembers}</p>
-                      </div>
-                    ) : null}
-                    {selectedSubmission.adultName || selectedSubmission.adultRole ? (
-                      <div className="response-inline-grid">
-                        <div className="dashboard-meta-item">
-                          <span>{content.form.summaryLabels.adultRole}</span>
-                          <strong>{selectedSubmission.adultRole || '—'}</strong>
-                        </div>
-                        <div className="dashboard-meta-item">
-                          <span>{content.form.summaryLabels.adultName}</span>
-                          <strong>{selectedSubmission.adultName || '—'}</strong>
-                        </div>
-                      </div>
-                    ) : null}
-                    {selectedSubmission.mentorName || selectedSubmission.mentorContact ? (
-                      <div className="response-inline-grid">
-                        <div className="dashboard-meta-item">
-                          <span>{content.form.summaryLabels.mentorName}</span>
-                          <strong>{selectedSubmission.mentorName || '—'}</strong>
-                        </div>
-                        <div className="dashboard-meta-item">
-                          <span>{content.form.summaryLabels.mentorContact}</span>
-                          <strong>{selectedSubmission.mentorContact || '—'}</strong>
-                        </div>
-                      </div>
-                    ) : null}
-                    <div className="result-actions">
-                      <a
-                        className="secondary-button"
-                        href={selectedSubmission.recordingLink}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {content.dashboard.openRecording}
-                      </a>
-                    </div>
-                  </article>
-
-                  <article className="dashboard-panel">
-                    <span className="card-eyebrow">{content.dashboard.summaryTitle}</span>
-                    <pre className="dashboard-summary">
-                      {buildSubmissionSummary(
-                        selectedSubmission,
-                        content.form,
-                        categoriesById,
-                        projectStagesById,
-                      )}
-                    </pre>
-                    <div className="result-actions">
-                      <button type="button" className="secondary-button" onClick={handleCopySummary}>
-                        {content.dashboard.copySummary}
-                      </button>
-                    </div>
-                  </article>
-
-                  <article className="dashboard-panel">
-                    <span className="card-eyebrow">{content.dashboard.notesTitle}</span>
-                    <label className="field">
-                      <span>{content.dashboard.notesTitle}</span>
-                      <textarea
-                        rows="7"
-                        value={notesDraft}
-                        onChange={(event) => setNotesDraft(event.target.value)}
-                        placeholder={content.dashboard.notesPlaceholder}
-                      />
-                    </label>
-                    <div className="result-actions">
-                      <button type="button" className="ghost-button" onClick={handleSaveNotes}>
-                        {content.dashboard.saveNotes}
-                      </button>
-                    </div>
-                    {feedback ? <p className="form-feedback">{feedback}</p> : null}
-                  </article>
-                </div>
-              </>
-            ) : submissions.length ? (
-              <div className="dashboard-empty">
-                <h2>{content.dashboard.queueEmptyTitle}</h2>
-                <p>{content.dashboard.queueEmptyText}</p>
-              </div>
-            ) : (
-              <div className="dashboard-empty">
-                <h2>{content.dashboard.emptyTitle}</h2>
-                <p>{content.dashboard.emptyText}</p>
-                <button
-                  type="button"
-                  className="primary-button"
-                  onClick={() => onNavigate('contact', 'apply')}
-                >
-                  {content.dashboard.primary}
-                </button>
-              </div>
-            )}
-          </section>
-        </div>
-      </section>
-    </>
-  )
-}
-
-function ApplicationForm({ content }) {
-  const [formState, setFormState] = useState(() => {
-    return { ...initialFormState, ...readStoredJson(routeStorageKey, initialFormState) }
-  })
-  const [feedback, setFeedback] = useState('')
-  const [showValidation, setShowValidation] = useState(false)
-  const [activeStepIndex, setActiveStepIndex] = useState(0)
-
-  useEffect(() => {
-    window.localStorage.setItem(routeStorageKey, JSON.stringify(formState))
-  }, [formState])
-
-  const categoriesById = Object.fromEntries(
-    content.form.categories.map((item) => [item.id, item.label]),
-  )
-  const stagesById = Object.fromEntries(
-    content.form.stages.map((item) => [item.id, item.label]),
-  )
-  const ageDetails = getAgeDetails(formState.age)
-  const effectiveApplicationOwner = ageDetails.isUnder13 ? 'adult' : formState.applicationOwner
-  const needsAdultSupport = effectiveApplicationOwner === 'adult'
-  const additionalTeamMembers = getAdditionalTeamMembers(formState, content.form)
-  const hasMentor = formState.mentorEnabled === 'yes'
-  const applicationPathMessage = !ageDetails.hasAge
-    ? content.form.applicationCard.empty
-    : ageDetails.isUnder13
-      ? content.form.applicationCard.under13
-      : ageDetails.canSelfApply
-        ? content.form.applicationCard.teen
-        : content.form.feedback.invalidAge
-  const contactHelperText = needsAdultSupport
-    ? content.form.helpers.contactAdult
-    : content.form.helpers.contactSelf
-
-  const requiredFieldDefinitions = useMemo(
-    () => {
-      const fields = [
-        { key: 'fullName', label: content.form.fields.fullName, value: formState.fullName },
-        { key: 'age', label: content.form.fields.age, value: formState.age },
-        {
-          key: 'applicationOwner',
-          label: content.form.fields.applicationOwner,
-          value: effectiveApplicationOwner,
-        },
-        { key: 'city', label: content.form.fields.city, value: formState.city },
-        { key: 'category', label: content.form.fields.category, value: formState.category },
-        {
-          key: 'projectStage',
-          label: content.form.fields.projectStage,
-          value: formState.projectStage,
-        },
-        { key: 'projectName', label: content.form.fields.projectName, value: formState.projectName },
-        { key: 'problem', label: content.form.fields.problem, value: formState.problem },
-        { key: 'description', label: content.form.fields.description, value: formState.description },
-        {
-          key: 'recordingLink',
-          label: content.form.fields.recordingLink,
-          value: formState.recordingLink,
-        },
-        { key: 'contact', label: content.form.fields.contact, value: formState.contact },
-      ]
-
-      if (needsAdultSupport) {
-        fields.splice(3, 0, {
-          key: 'adultRole',
-          label: content.form.fields.adultRole,
-          value: formState.adultRole,
-        })
-        fields.splice(4, 0, {
-          key: 'adultName',
-          label: content.form.fields.adultName,
-          value: formState.adultName,
-        })
-      }
-
-      additionalTeamMembers.forEach((member, index) => {
-        const insertAt = 5 + index * 4
-        fields.splice(
-          insertAt,
-          0,
-          {
-            key: member.nameKey,
-            label: `${member.title} - ${content.form.fields.fullName}`,
-            value: formState[member.nameKey],
-          },
-          {
-            key: member.ageKey,
-            label: `${member.title} - ${content.form.fields.age}`,
-            value: formState[member.ageKey],
-          },
-          {
-            key: member.cityKey,
-            label: `${member.title} - ${content.form.fields.city}`,
-            value: formState[member.cityKey],
-          },
-          {
-            key: member.contactKey,
-            label: `${member.title} - ${content.form.fields.teamMemberContact}`,
-            value: formState[member.contactKey],
-          },
-        )
-      })
-
-      if (hasMentor) {
-        fields.splice(6, 0, {
-          key: 'mentorName',
-          label: content.form.fields.mentorName,
-          value: formState.mentorName,
-        })
-      }
-
-      return fields
-    },
-    [
-      content.form.fields,
-      effectiveApplicationOwner,
-      formState.age,
-      formState.adultName,
-      formState.adultRole,
-      formState.category,
-      formState.city,
-      formState.contact,
-      formState.description,
-      formState.fullName,
-      formState.mentorName,
-      formState.problem,
-      formState.projectName,
-      formState.projectStage,
-      formState.recordingLink,
-      formState.teamMemberTwoName,
-      formState.teamMemberTwoAge,
-      formState.teamMemberTwoCity,
-      formState.teamMemberTwoContact,
-      formState.teamMemberThreeName,
-      formState.teamMemberThreeAge,
-      formState.teamMemberThreeCity,
-      formState.teamMemberThreeContact,
-      additionalTeamMembers,
-      hasMentor,
-      needsAdultSupport,
-    ],
-  )
-  const missingRequiredFields = requiredFieldDefinitions.filter(
-    ({ value }) => !isFilled(value),
-  )
-  const filledCount = requiredFieldDefinitions.length - missingRequiredFields.length
-  const progress = Math.round((filledCount / requiredFieldDefinitions.length) * 100)
-  const readyForSummary = missingRequiredFields.length === 0
-
-  const basicsStepFields = [
-    { key: 'fullName', label: content.form.fields.fullName, value: formState.fullName },
-    { key: 'age', label: content.form.fields.age, value: formState.age },
-    {
-      key: 'applicationOwner',
-      label: content.form.fields.applicationOwner,
-      value: effectiveApplicationOwner,
-    },
-    { key: 'city', label: content.form.fields.city, value: formState.city },
-    ...(needsAdultSupport
-      ? [
-          {
-            key: 'adultRole',
-            label: content.form.fields.adultRole,
-            value: formState.adultRole,
-          },
-          {
-            key: 'adultName',
-            label: content.form.fields.adultName,
-            value: formState.adultName,
-          },
-        ]
-      : []),
-    { key: 'teamType', label: content.form.fields.teamType, value: formState.teamType },
-    ...additionalTeamMembers.flatMap((member) => [
-      {
-        key: member.nameKey,
-        label: `${member.title} - ${content.form.fields.fullName}`,
-        value: formState[member.nameKey],
-      },
-      {
-        key: member.ageKey,
-        label: `${member.title} - ${content.form.fields.age}`,
-        value: formState[member.ageKey],
-      },
-      {
-        key: member.cityKey,
-        label: `${member.title} - ${content.form.fields.city}`,
-        value: formState[member.cityKey],
-      },
-      {
-        key: member.contactKey,
-        label: `${member.title} - ${content.form.fields.teamMemberContact}`,
-        value: formState[member.contactKey],
-      },
-    ]),
-    ...(hasMentor
-      ? [
-          {
-            key: 'mentorName',
-            label: content.form.fields.mentorName,
-            value: formState.mentorName,
-          },
-        ]
-      : []),
-  ]
-
-  const setupStepFields = [
-    { key: 'category', label: content.form.fields.category, value: formState.category },
-    {
-      key: 'projectStage',
-      label: content.form.fields.projectStage,
-      value: formState.projectStage,
-    },
-  ]
-
-  const storyStepFields = [
-    { key: 'projectName', label: content.form.fields.projectName, value: formState.projectName },
-    { key: 'problem', label: content.form.fields.problem, value: formState.problem },
-    { key: 'description', label: content.form.fields.description, value: formState.description },
-  ]
-
-  const pitchStepFields = [
-    {
-      key: 'recordingLink',
-      label: content.form.fields.recordingLink,
-      value: formState.recordingLink,
-    },
-    { key: 'contact', label: content.form.fields.contact, value: formState.contact },
-  ]
-
-  const stepMissingFields = [
-    basicsStepFields.filter(({ value }) => !isFilled(value)),
-    setupStepFields.filter(({ value }) => !isFilled(value)),
-    storyStepFields.filter(({ value }) => !isFilled(value)),
-    pitchStepFields.filter(({ value }) => !isFilled(value)),
-  ]
-
-  const stepCompletion = [
-    stepMissingFields[0].length === 0 && ageDetails.isEligible,
-    stepMissingFields[1].length === 0,
-    stepMissingFields[2].length === 0,
-    stepMissingFields[3].length === 0,
-  ]
-  const firstIncompleteStepIndex = stepCompletion.findIndex((item) => !item)
-  const stepDefinitions = [
-    {
-      key: 'basics',
-      ...content.form.sections.basics,
-      milestone: content.form.milestones[0],
-    },
-    {
-      key: 'setup',
-      ...content.form.sections.setup,
-      milestone: content.form.milestones[1],
-    },
-    {
-      key: 'story',
-      ...content.form.sections.story,
-      milestone: content.form.milestones[2],
-    },
-    {
-      key: 'pitch',
-      ...content.form.sections.pitch,
-      milestone: content.form.milestones[3],
-    },
-  ]
-  const currentStep = stepDefinitions[activeStepIndex]
-  const currentStepMissingFields = stepMissingFields[activeStepIndex]
-  const currentStepComplete = stepCompletion[activeStepIndex]
-  const lastStepIndex = stepDefinitions.length - 1
-  const isLastStep = activeStepIndex === lastStepIndex
-
-  const handleChange = (event) => {
-    const { name, value } = event.target
-    setFormState((current) => {
-      const nextState = { ...current, [name]: value }
-
-      if (name === 'age') {
-        const nextAgeDetails = getAgeDetails(value)
-
-        if (!nextAgeDetails.hasAge) {
-          nextState.applicationOwner = ''
-        } else if (nextAgeDetails.isUnder13) {
-          nextState.applicationOwner = 'adult'
-        } else if (!current.applicationOwner) {
-          nextState.applicationOwner = 'self'
-        }
-      }
-
-      return nextState
-    })
-  }
-
-  const updateField = (name, value) => {
-    setFormState((current) => {
-      const nextState = { ...current, [name]: value }
-
-      if (name === 'applicationOwner' && getAgeDetails(current.age).isUnder13) {
-        nextState.applicationOwner = 'adult'
-      }
-
-      if (name === 'mentorEnabled' && value === 'no') {
-        nextState.mentorName = ''
-        nextState.mentorContact = ''
-      }
-
-      if (name === 'teamType' && value === 'solo') {
-        nextState.teamMemberTwoName = ''
-        nextState.teamMemberTwoAge = ''
-        nextState.teamMemberTwoCity = ''
-        nextState.teamMemberTwoContact = ''
-        nextState.teamMemberThreeName = ''
-        nextState.teamMemberThreeAge = ''
-        nextState.teamMemberThreeCity = ''
-        nextState.teamMemberThreeContact = ''
-      }
-
-      if (name === 'teamType' && value === 'duo') {
-        nextState.teamMemberThreeName = ''
-        nextState.teamMemberThreeAge = ''
-        nextState.teamMemberThreeCity = ''
-        nextState.teamMemberThreeContact = ''
-      }
-
-      return nextState
-    })
-  }
-
-  const handleOpenStep = (index) => {
-    const isUnlocked = index === 0 || stepCompletion.slice(0, index).every(Boolean)
-
-    if (!isUnlocked) {
-      return
-    }
-
-    setActiveStepIndex(index)
-    setFeedback('')
-  }
-
-  const handleNextStep = () => {
-    setShowValidation(true)
-
-    if (activeStepIndex === 0 && ageDetails.hasAge && !ageDetails.isEligible) {
-      setFeedback(content.form.feedback.invalidAge)
-      return
-    }
-
-    if (!currentStepComplete) {
-      setFeedback(content.form.feedback.completeRequired)
-      return
-    }
-
-    setFeedback('')
-    setShowValidation(false)
-    setActiveStepIndex((current) => Math.min(current + 1, lastStepIndex))
-  }
-
-  const handlePreviousStep = () => {
-    setFeedback('')
-    setActiveStepIndex((current) => Math.max(current - 1, 0))
-  }
-
-  const handleSubmit = (event) => {
-    event.preventDefault()
-    setShowValidation(true)
-
-    if (firstIncompleteStepIndex !== -1) {
-      setActiveStepIndex(firstIncompleteStepIndex)
-    }
-
-    if (missingRequiredFields.length > 0) {
-      setFeedback(content.form.feedback.completeRequired)
-      return
-    }
-
-    if (!ageDetails.isEligible) {
-      setFeedback(content.form.feedback.invalidAge)
-      return
-    }
-
-    const now = new Date().toISOString()
-    const submissionId = formState.submissionId || createSubmissionId()
-    const existingSubmission = getStoredSubmissions().find(
-      (submission) => submission.id === submissionId,
-    )
-    const nextFormState = {
-      ...formState,
-      submissionId,
-      applicationOwner: effectiveApplicationOwner,
-    }
-    const nextSubmission = {
-      ...nextFormState,
-      id: submissionId,
-      reviewStage: existingSubmission?.reviewStage || defaultReviewStage,
-      organizerNotes: existingSubmission?.organizerNotes || '',
-      createdAt: existingSubmission?.createdAt || now,
-      updatedAt: now,
-    }
-
-    saveStoredSubmissions(
-      getStoredSubmissions()
-        .filter((submission) => submission.id !== submissionId)
-        .concat(nextSubmission)
-        .sort(
-          (left, right) =>
-            new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime(),
-        ),
-    )
-
-    setFormState(nextFormState)
-    setShowValidation(false)
-    setFeedback(content.form.feedback.prepared)
-  }
-
-  const handleReset = () => {
-    setFormState(initialFormState)
-    setShowValidation(false)
-    setActiveStepIndex(0)
-    setFeedback(content.form.feedback.cleared)
-    window.localStorage.removeItem(routeStorageKey)
-  }
-
-  return (
-    <div className="form-shell form-shell--enhanced">
-      <form className="application-form" onSubmit={handleSubmit} noValidate>
-        <div className="form-header">
-          <span className="card-eyebrow">{content.form.eyebrow}</span>
-          <h2>{content.form.title}</h2>
-          <p>{content.form.text}</p>
-
-          <div className="application-guide">
-            {content.form.infoPills.map((item) => (
-              <span key={item} className="guide-pill">
-                {item}
-              </span>
-            ))}
-          </div>
-
-          <div className="save-status">{content.form.saveNote}</div>
-        </div>
-
-        <div className="progress-card">
-          <div className="progress-copy">
-            <strong>{content.form.progressLabel}</strong>
-            <span>{progress}%</span>
-          </div>
-          <div className="progress-bar">
-            <span style={{ width: `${progress}%` }} />
-          </div>
-          <div className="wizard-step-row">
-            {stepDefinitions.map((step, index) => (
-              <button
-                key={step.key}
-                type="button"
-                className={`wizard-step-chip ${
-                  activeStepIndex === index ? 'is-active' : stepCompletion[index] ? 'is-complete' : ''
-                }`}
-                onClick={() => handleOpenStep(index)}
-                disabled={index !== 0 && !stepCompletion.slice(0, index).every(Boolean)}
-              >
-                <span className="wizard-step-chip__count">{step.step}</span>
-                <strong>{step.milestone}</strong>
-              </button>
-            ))}
-          </div>
-          <div className="progress-focus">
-            <span>{content.form.currentStepLabel}</span>
-            <strong>{currentStep.title}</strong>
-            <p>{currentStep.text}</p>
-          </div>
-
-          {readyForSummary ? (
-            <div className="completion-banner">
-              <strong>{content.form.readyTitle}</strong>
-              <p>{content.form.readyText}</p>
-            </div>
-          ) : currentStepComplete ? (
-            <div className="completion-banner">
-              <strong>{currentStep.milestone}</strong>
-              <p>{content.form.nextStepReady}</p>
-            </div>
-          ) : (
-            <div className="missing-block">
-              <strong>{content.form.missingTitle}</strong>
-              <div className="missing-chip-row">
-                {currentStepMissingFields.map((item) => (
-                  <span key={item.key} className="missing-chip">
-                    {item.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {activeStepIndex === 0 ? (
-        <FormSection
-          step={content.form.sections.basics.step}
-          title={content.form.sections.basics.title}
-          text={content.form.sections.basics.text}
-        >
-          <div className="field-grid">
-            <Field
-              label={content.form.fields.fullName}
-              name="fullName"
-              value={formState.fullName}
-              onChange={handleChange}
-              placeholder={content.form.placeholders.fullName}
-              required
-              invalid={showValidation && !isFilled(formState.fullName)}
-            />
-            <Field
-              label={content.form.fields.age}
-              name="age"
-              type="number"
-              value={formState.age}
-              onChange={handleChange}
-              min="8"
-              max="17"
-              placeholder={content.form.placeholders.age}
-              required
-              invalid={showValidation && !isFilled(formState.age)}
-            />
-            <Field
-              label={content.form.fields.city}
-              name="city"
-              value={formState.city}
-              onChange={handleChange}
-              placeholder={content.form.placeholders.city}
-              required
-              invalid={showValidation && !isFilled(formState.city)}
-            />
-            <Field
-              label={content.form.fields.school}
-              name="school"
-              value={formState.school}
-              onChange={handleChange}
-              placeholder={content.form.placeholders.school}
-              optionalText={content.form.optionalLabel}
-            />
-          </div>
-
-          <article
-            className={`age-path-card ${
-              ageDetails.isUnder13 ? 'is-under13' : ageDetails.canSelfApply ? 'is-open' : ''
-            }`}
-          >
-            <span className="card-eyebrow">{content.form.applicationCard.eyebrow}</span>
-            <strong>{content.form.applicationCard.title}</strong>
-            <p>{applicationPathMessage}</p>
-            <div className="age-path-card__chips">
-              <span className="age-path-chip">{content.form.applicationCard.team}</span>
-            </div>
-          </article>
-
-          <div
-            className={`selection-block selection-block--soft ${
-              showValidation && !isFilled(effectiveApplicationOwner) ? 'has-error' : ''
-            }`}
-          >
-            <div className="selection-heading selection-heading--stacked">
-              <div>
-                <strong>{content.form.fields.applicationOwner}</strong>
-                <p>{content.form.applicationCard.title}</p>
-              </div>
-            </div>
-            <div className="stage-row">
-              {content.form.applicationPaths.map((path) => (
-                <button
-                  key={path.id}
-                  type="button"
-                  className={`stage-chip ${
-                    effectiveApplicationOwner === path.id ? 'is-selected' : ''
-                  }`}
-                  aria-pressed={effectiveApplicationOwner === path.id}
-                  onClick={() => updateField('applicationOwner', path.id)}
-                  disabled={path.id === 'self' && ageDetails.isUnder13}
-                >
-                  {path.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {needsAdultSupport ? (
-            <div className="selection-block selection-block--accent">
-              <div className="selection-heading selection-heading--stacked">
-                <div>
-                  <strong>{content.form.adultCardTitle}</strong>
-                  <p>{content.form.adultCardText}</p>
-                </div>
-              </div>
-              <div className="field-grid">
-                <Field
-                  label={content.form.fields.adultRole}
-                  name="adultRole"
-                  value={formState.adultRole}
-                  onChange={handleChange}
-                  placeholder={content.form.placeholders.adultRole}
-                  helper={content.form.helpers.adultRole}
-                  required
-                  invalid={showValidation && !isFilled(formState.adultRole)}
-                />
-                <Field
-                  label={content.form.fields.adultName}
-                  name="adultName"
-                  value={formState.adultName}
-                  onChange={handleChange}
-                  placeholder={content.form.placeholders.adultName}
-                  required
-                  invalid={showValidation && !isFilled(formState.adultName)}
-                />
-              </div>
-            </div>
-          ) : null}
-
-          <div className="selection-block selection-block--soft">
-            <div className="selection-heading selection-heading--stacked">
-              <div>
-                <strong>{content.form.fields.teamType}</strong>
-                <p>{content.form.teamHint}</p>
-              </div>
-            </div>
-            <div className="stage-row">
-              {content.form.teamModes.map((mode) => (
-                <button
-                  key={mode.id}
-                  type="button"
-                  className={`stage-chip ${formState.teamType === mode.id ? 'is-selected' : ''}`}
-                  aria-pressed={formState.teamType === mode.id}
-                  onClick={() => updateField('teamType', mode.id)}
-                >
-                  {mode.label}
-                </button>
-              ))}
-            </div>
-
-            {additionalTeamMembers.length ? (
-              <div className="team-member-stack">
-                <p className="team-member-stack__intro">{content.form.teamMemberCards.intro}</p>
-                {additionalTeamMembers.map((member) => (
-                  <article key={member.id} className="team-member-card">
-                    <div className="team-member-card__head">
-                      <strong>{member.title}</strong>
-                    </div>
-                    <div className="field-grid">
-                      <Field
-                        label={content.form.fields.fullName}
-                        name={member.nameKey}
-                        value={formState[member.nameKey]}
-                        onChange={handleChange}
-                        placeholder={content.form.placeholders.fullName}
-                        required
-                        invalid={showValidation && !isFilled(formState[member.nameKey])}
-                      />
-                      <Field
-                        label={content.form.fields.age}
-                        name={member.ageKey}
-                        type="number"
-                        value={formState[member.ageKey]}
-                        onChange={handleChange}
-                        min="8"
-                        max="17"
-                        placeholder={content.form.placeholders.age}
-                        required
-                        invalid={showValidation && !isFilled(formState[member.ageKey])}
-                      />
-                      <Field
-                        label={content.form.fields.city}
-                        name={member.cityKey}
-                        value={formState[member.cityKey]}
-                        onChange={handleChange}
-                        placeholder={content.form.placeholders.city}
-                        required
-                        invalid={showValidation && !isFilled(formState[member.cityKey])}
-                      />
-                      <Field
-                        label={content.form.fields.teamMemberContact}
-                        name={member.contactKey}
-                        type="tel"
-                        value={formState[member.contactKey]}
-                        onChange={handleChange}
-                        placeholder={content.form.placeholders.teamMemberContact}
-                        helper={content.form.helpers.teamMemberContact}
-                        required
-                        invalid={showValidation && !isFilled(formState[member.contactKey])}
-                      />
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="selection-block selection-block--soft">
-            <div className="selection-heading selection-heading--stacked">
-              <div>
-                <strong>{content.form.mentorToggleTitle}</strong>
-                <p>{content.form.mentorToggleText}</p>
-              </div>
-            </div>
-            <div className="stage-row">
-              {content.form.mentorChoices.map((choice) => (
-                <button
-                  key={choice.id}
-                  type="button"
-                  className={`stage-chip ${
-                    formState.mentorEnabled === choice.id ? 'is-selected' : ''
-                  }`}
-                  aria-pressed={formState.mentorEnabled === choice.id}
-                  onClick={() => updateField('mentorEnabled', choice.id)}
-                >
-                  {choice.label}
-                </button>
-              ))}
-            </div>
-
-            {hasMentor ? (
-              <div className="mentor-fields">
-                <div className="selection-heading selection-heading--stacked">
-                  <div>
-                    <strong>{content.form.mentorCardTitle}</strong>
-                    <p>{content.form.mentorCardText}</p>
-                  </div>
-                </div>
-                <div className="field-grid">
-                  <Field
-                    label={content.form.fields.mentorName}
-                    name="mentorName"
-                    value={formState.mentorName}
-                    onChange={handleChange}
-                    placeholder={content.form.placeholders.mentorName}
-                    required
-                    invalid={showValidation && !isFilled(formState.mentorName)}
-                  />
-                  <Field
-                    label={content.form.fields.mentorContact}
-                    name="mentorContact"
-                    value={formState.mentorContact}
-                    onChange={handleChange}
-                    placeholder={content.form.placeholders.mentorContact}
-                    helper={content.form.helpers.mentorContact}
-                    optionalText={content.form.optionalLabel}
-                  />
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </FormSection>
-        ) : null}
-
-        {activeStepIndex === 1 ? (
-        <FormSection
-          step={content.form.sections.setup.step}
-          title={content.form.sections.setup.title}
-          text={content.form.sections.setup.text}
-        >
-          <div
-            className={`selection-block ${
-              showValidation && !isFilled(formState.category) ? 'has-error' : ''
-            }`}
-          >
-            <div className="selection-heading">
-              <strong>{content.form.fields.category}</strong>
-            </div>
-            <div className="category-grid">
-              {content.form.categories.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  className={`category-card ${
-                    formState.category === category.id ? 'is-selected' : ''
-                  }`}
-                  aria-pressed={formState.category === category.id}
-                  onClick={() => updateField('category', category.id)}
-                >
-                  <strong>{category.label}</strong>
-                  <span>{category.description}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div
-            className={`selection-block ${
-              showValidation && !isFilled(formState.projectStage) ? 'has-error' : ''
-            }`}
-          >
-            <div className="selection-heading">
-              <strong>{content.form.fields.projectStage}</strong>
-            </div>
-            <div className="stage-row">
-              {content.form.stages.map((stage) => (
-                <button
-                  key={stage.id}
-                  type="button"
-                  className={`stage-chip ${
-                    formState.projectStage === stage.id ? 'is-selected' : ''
-                  }`}
-                  aria-pressed={formState.projectStage === stage.id}
-                  onClick={() => updateField('projectStage', stage.id)}
-                >
-                  {stage.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </FormSection>
-        ) : null}
-
-        {activeStepIndex === 2 ? (
-        <FormSection
-          step={content.form.sections.story.step}
-          title={content.form.sections.story.title}
-          text={content.form.sections.story.text}
-        >
-          <div className="field-grid">
-            <Field
-              label={content.form.fields.projectName}
-              name="projectName"
-              value={formState.projectName}
-              onChange={handleChange}
-              placeholder={content.form.placeholders.projectName}
-              required
-              invalid={showValidation && !isFilled(formState.projectName)}
-            />
-
-            <div className={`field ${showValidation && !isFilled(formState.problem) ? 'is-invalid' : ''}`}>
-              <div className="field-label">
-                <strong>{content.form.fields.problem}</strong>
-              </div>
-              <input
-                name="problem"
-                value={formState.problem}
-                onChange={handleChange}
-                placeholder={content.form.placeholders.problem}
-                aria-invalid={showValidation && !isFilled(formState.problem)}
-                required
-              />
-              <small className="field-helper">{content.form.helpers.problem}</small>
-            </div>
-          </div>
-
-          <div className="field-grid">
-            <div
-              className={`field field--full ${
-                showValidation && !isFilled(formState.description) ? 'is-invalid' : ''
-              }`}
-            >
-              <div className="field-label">
-                <strong>{content.form.fields.description}</strong>
-              </div>
-              <textarea
-                name="description"
-                value={formState.description}
-                onChange={handleChange}
-                rows="5"
-                placeholder={content.form.placeholders.description}
-                aria-invalid={showValidation && !isFilled(formState.description)}
-                required
-              />
-              <div className="field-meta">
-                <small className="field-helper">{content.form.helpers.description}</small>
-                <small>{formState.description.trim().length}</small>
-              </div>
-            </div>
-          </div>
-
-          <div className="prompt-block">
-            <p className="prompt-block__title">{content.form.ideaPromptTitle}</p>
-            <div className="prompt-grid">
-              {content.form.ideaPrompts.map((item) => (
-                <article key={item.title} className="prompt-card">
-                  <strong>{item.title}</strong>
-                  <p>{item.body}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </FormSection>
-        ) : null}
-
-        {activeStepIndex === 3 ? (
-        <FormSection
-          step={content.form.sections.pitch.step}
-          title={content.form.sections.pitch.title}
-          text={content.form.sections.pitch.text}
-        >
-          <div className="field-grid">
-            <div
-              className={`field ${
-                showValidation && !isFilled(formState.recordingLink) ? 'is-invalid' : ''
-              }`}
-            >
-              <div className="field-label">
-                <strong>{content.form.fields.recordingLink}</strong>
-              </div>
-              <input
-                name="recordingLink"
-                type="url"
-                value={formState.recordingLink}
-                onChange={handleChange}
-                placeholder={content.form.placeholders.recordingLink}
-                aria-invalid={showValidation && !isFilled(formState.recordingLink)}
-                required
-              />
-              <small className="field-helper">{content.form.helpers.recordingLink}</small>
-            </div>
-
-            <Field
-              label={content.form.fields.contact}
-              name="contact"
-              value={formState.contact}
-              onChange={handleChange}
-              placeholder={content.form.placeholders.contact}
-              helper={contactHelperText}
-              required
-              invalid={showValidation && !isFilled(formState.contact)}
-            />
-          </div>
-
-          <div className="field-grid">
-            <Field
-              label={content.form.fields.projectLink}
-              name="projectLink"
-              type="url"
-              value={formState.projectLink}
-              onChange={handleChange}
-              placeholder={content.form.placeholders.projectLink}
-              helper={content.form.helpers.projectLink}
-              optionalText={content.form.optionalLabel}
-            />
-          </div>
-        </FormSection>
-        ) : null}
-
-        <div className="wizard-actions">
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={handlePreviousStep}
-            disabled={activeStepIndex === 0}
-          >
-            {content.form.back}
-          </button>
-          {isLastStep ? (
-            <button type="submit" className="primary-button">
-              {content.form.submit}
-            </button>
-          ) : (
-            <button type="button" className="primary-button" onClick={handleNextStep}>
-              {content.form.next}
-            </button>
-          )}
-        </div>
-
-        <div className="wizard-footer">
-          <button type="button" className="ghost-button ghost-button--soft" onClick={handleReset}>
-            {content.form.reset}
-          </button>
-          <span>
-            {currentStep.step} / {stepDefinitions.length}
-          </span>
-        </div>
-
-        {feedback ? <p className="form-feedback">{feedback}</p> : null}
-      </form>
-    </div>
-  )
-}
-
-function FormSection({ step, title, text, children }) {
-  return (
-    <section className="form-section">
-      <div className="form-section__head">
-        <span className="form-section__step">{step}</span>
-        <div>
-          <h3>{title}</h3>
-          <p>{text}</p>
-        </div>
-      </div>
-      {children}
-    </section>
-  )
-}
-
-function Field({ label, helper, optionalText, invalid = false, ...props }) {
-  return (
-    <label className={`field ${invalid ? 'is-invalid' : ''}`}>
-      <div className="field-label">
-        <strong>{label}</strong>
-        {optionalText ? <small>{optionalText}</small> : null}
-      </div>
-      <input {...props} aria-invalid={invalid || undefined} />
-      {helper ? <small className="field-helper">{helper}</small> : null}
-    </label>
-  )
-}
-
-function HackathonLockup({ content, variant = 'hero' }) {
-  return (
-    <div className={`hackathon-lockup hackathon-lockup--${variant}`}>
-      <img
-        className="hackathon-lockup__icon"
-        src={hackathonLogo}
-        alt={content.hackathonLogoAlt}
-      />
-    </div>
-  )
-}
-
-function StatCard({ value, label }) {
-  return (
-    <div className="stat-card">
-      <strong>{value}</strong>
-      <span>{label}</span>
-    </div>
-  )
-}
-
-function FeatureCard({ title, body }) {
-  return (
-    <article className="feature-card">
-      <h3>{title}</h3>
-      <p>{body}</p>
-    </article>
-  )
-}
-
-function MediaSlotCard({
-  item,
-  wide = false,
-  compact = false,
-  variant = 'default',
-  onOpenVideo,
-  videoActionLabel,
-}) {
-  const isVideo = item.type === 'video'
-  const classes = [
-    'media-slot',
-    `media-slot--${variant}`,
-    `media-slot--${item.type || 'photo'}`,
-    wide ? 'media-slot--wide' : '',
-    compact ? 'media-slot--compact' : '',
-    item.size ? `media-slot--${item.size}` : '',
-    item.tone ? `media-slot--tone-${item.tone}` : '',
-    item.image ? 'has-image' : 'is-placeholder',
-    isVideo ? 'media-slot--interactive' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
-
-  const Element = isVideo ? 'button' : 'article'
-  const interactiveProps = isVideo
-    ? {
-        type: 'button',
-        onClick: () => onOpenVideo?.(item),
-        'aria-label': videoActionLabel ? `${videoActionLabel}: ${item.title}` : item.title,
-      }
-    : {}
-
-  return (
-    <Element className={classes} {...interactiveProps}>
-      <div className="media-slot__frame">
-        {item.image ? (
-          <img
-            className={item.imageFit === 'contain' ? 'is-contain' : ''}
-            src={item.image}
-            alt={item.imageAlt || item.title}
-          />
-        ) : (
-          <div className="media-slot__mock" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
-        )}
-
-        <span className="media-slot__badge">{item.badge}</span>
-
-        {item.type === 'video' ? <div className="media-slot__play" aria-hidden="true" /> : null}
-      </div>
-
-      <div className="media-slot__copy">
-        <strong>{item.title}</strong>
-        <p>{item.note}</p>
-      </div>
-    </Element>
-  )
-}
-
-function VideoPreviewModal({ item, content, onClose }) {
-  const videoSource = useMemo(() => getVideoPreviewSource(item), [item])
-
-  useEffect(() => {
-    if (!item) {
-      return undefined
-    }
-
-    const previousOverflow = document.body.style.overflow
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        onClose()
-      }
-    }
-
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.body.style.overflow = previousOverflow
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [item, onClose])
-
-  if (!item) {
-    return null
-  }
-
-  return (
-    <div
-      className="video-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="video-modal-title"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose()
-        }
-      }}
-    >
-      <div className="video-modal__panel">
-        <button
-          type="button"
-          className="video-modal__close"
-          aria-label={content.closeLabel}
-          onClick={onClose}
-          autoFocus
-        >
-          <span aria-hidden="true">×</span>
-        </button>
-
-        <div className={`video-modal__stage video-modal__stage--${videoSource.kind}`}>
-          <div className="video-modal__stage-topbar" aria-hidden="true">
-            <div className="video-modal__stage-meta">
-              <span className="video-modal__stage-badge">{item.badge}</span>
-              <span className="video-modal__stage-signal" />
-              <span className="video-modal__stage-tag">{content.eyebrow}</span>
-            </div>
-            <span className="video-modal__stage-title">{item.title}</span>
-          </div>
-
-          <div className="video-modal__viewport">
-            {videoSource.kind === 'embed' ? (
-              <iframe
-                src={videoSource.src}
-                title={item.title}
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowFullScreen
-              />
-            ) : videoSource.kind === 'file' ? (
-              <video controls autoPlay playsInline poster={item.videoPoster}>
-                <source src={videoSource.src} />
-              </video>
-            ) : (
-              <div
-                className={`video-modal__placeholder-screen ${
-                  item.tone ? `video-modal__placeholder-screen--${item.tone}` : ''
-                }`}
-                aria-hidden="true"
-              >
-                <div className="video-modal__placeholder-grid" />
-                <div className="video-modal__placeholder-play" />
-                <div className="video-modal__placeholder-bars">
-                  <span />
-                  <span />
-                </div>
-                <div className="video-modal__placeholder-orb" />
-                <div className="video-modal__placeholder-copy">
-                  <strong>{content.placeholderTitle}</strong>
-                  <p>{content.placeholderText}</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="video-modal__stage-dock" aria-hidden="true">
-            <div className="video-modal__timeline">
-              <span />
-            </div>
-            <div className="video-modal__controls">
-              <span className="video-modal__control video-modal__control--play" />
-              <span className="video-modal__control" />
-              <span className="video-modal__control" />
-              <span className="video-modal__time">00:45</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="video-modal__content">
-          <span className="card-eyebrow">{content.eyebrow}</span>
-          <h3 id="video-modal-title">{item.title}</h3>
-          <p>{item.note}</p>
-
-          <div className="video-modal__chips">
-            <span className="video-modal__chip">{item.badge}</span>
-          </div>
-
-          <div className="video-modal__highlight-list">
-            {content.highlights.map((highlight) => (
-              <div key={highlight} className="video-modal__highlight">
-                <span aria-hidden="true" />
-                <strong>{highlight}</strong>
-              </div>
-            ))}
-          </div>
-
-          {videoSource.kind === 'external' ? (
-            <a
-              className="secondary-button video-modal__external"
-              href={videoSource.src}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {content.openExternal}
-            </a>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function SectionTitle({ eyebrow, title, body, inverted = false }) {
-  return (
-    <div className={`section-title ${inverted ? 'section-title--inverted' : ''}`}>
-      <span className="eyebrow">{eyebrow}</span>
-      <h2>{title}</h2>
-      <p>{body}</p>
-    </div>
-  )
-}
-
-function SiteFooter({ content, onNavigate }) {
-  return (
-    <footer className="site-footer">
-      <div className="container footer-grid">
-        <div className="footer-brand-block">
-          <button
-            type="button"
-            className="footer-hackathon-mark"
-            onClick={() => onNavigate('home')}
-            aria-label={content.footer.home}
-          >
-            <HackathonLockup content={content} variant="compact" />
-          </button>
-
-          <div>
-            <span className="eyebrow">{content.footer.eyebrow}</span>
-            <h2>{content.footer.title}</h2>
-            <p>{content.footer.text}</p>
-          </div>
-        </div>
-
-        <div className="footer-center-block">
-          <div className="footer-logo-strip">
-            <PartnerLogoBadge
-              logo={codeSproutsLogo}
-              alt="Code Sprouts Palestine logo"
-              name="Code Sprouts Palestine"
-              variant="footer"
-            />
-            <PartnerLogoBadge
-              logo={techFromPalestineLogo}
-              alt="Tech From Palestine logo"
-              name="Tech From Palestine"
-              href={techFromPalestineUrl}
-              variant="footer"
-            />
-          </div>
-
-          <div className="footer-links">
-            <button type="button" onClick={() => onNavigate('home')}>
-              {content.footer.home}
-            </button>
-            <button type="button" onClick={() => onNavigate('home', 'tracks')}>
-              {content.footer.tracks}
-            </button>
-            <button type="button" onClick={() => onNavigate('dashboard')}>
-              {content.footer.dashboard}
-            </button>
-            <button type="button" onClick={() => onNavigate('contact', 'apply')}>
-              {content.footer.apply}
-            </button>
-          </div>
-        </div>
-
-        <div className="footer-contact-card">
-          <span className="card-eyebrow">{content.footer.contactTitle}</span>
-          <p>{content.footer.contactText}</p>
-
-          <div className="footer-contact-list">
-            <a className="footer-contact-link" href={`mailto:${contactEmail}`}>
-              <span>{content.footer.emailLabel}</span>
-              <strong>{contactEmail}</strong>
-            </a>
-            <a className="footer-contact-link" href={`tel:${contactPhone}`}>
-              <span>{content.footer.phoneLabel}</span>
-              <strong>{contactPhone}</strong>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <div className="container footer-legal">
-        <p>{content.footer.rights}</p>
-      </div>
-    </footer>
   )
 }
 
