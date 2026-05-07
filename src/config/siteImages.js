@@ -1,10 +1,11 @@
 import codeSproutsLogoSrc from '../../assets/code-sprouts-palestine-logo.jpeg'
 import techFromPalestineLogoSrc from '../../assets/tech-from-palestine-logo-highres.jpg'
 import hackathonLogoSrc from '../../assets/hackathon-logos/hackathon-logo-master.png'
+import { withPublicAssetPath } from './appConfig'
 
-const aroundTheRoomMediaPath = '/media/around-the-room'
-const buildersGalleryMediaPath = '/media/builders-gallery'
-const heroMediaPath = '/media/hero'
+const aroundTheRoomMediaPath = withPublicAssetPath('/media/around-the-room')
+const buildersGalleryMediaPath = withPublicAssetPath('/media/builders-gallery')
+const heroMediaPath = withPublicAssetPath('/media/hero')
 
 // Single source of truth for every replaceable image in the app.
 // If you want to swap images, start in this file.

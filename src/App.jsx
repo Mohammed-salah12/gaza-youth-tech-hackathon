@@ -5,7 +5,11 @@ import ContactPage from './components/pages/ContactPage'
 import DashboardPage from './components/pages/DashboardPage'
 import HomePage from './components/pages/HomePage'
 import VideoPreviewModal from './components/shared/VideoPreviewModal'
-import { languageStorageKey, techFromPalestineUrl } from './config/appConfig'
+import {
+  languageStorageKey,
+  techFromPalestineUrl,
+  withPublicAssetPath,
+} from './config/appConfig'
 import { applyPageImages } from './config/siteImages'
 import { getPreferredLanguage, parseHash, scrollToRoute } from './utils/appUtils'
 
@@ -71,7 +75,7 @@ const content = {
           type: 'video',
           title: 'Student pitch clips',
           note: 'Short videos from participating teams will bring each idea to life during the contest.',
-          videoUrl: '/media/hero/student-pitch-clips.mp4',
+          videoUrl: withPublicAssetPath('/media/hero/student-pitch-clips.mp4'),
         },
       ],
     },
@@ -118,7 +122,7 @@ const content = {
           note: 'Apps, robots, and sensors begin to move from concept to something visible, testable, and exciting.',
           size: 'landscape',
           tone: 'blue',
-          videoUrl: '/media/builders-gallery/prototype-in-motion.mp4',
+          videoUrl: withPublicAssetPath('/media/builders-gallery/prototype-in-motion.mp4'),
         },
         {
           badge: 'Making photo',
@@ -143,7 +147,7 @@ const content = {
           note: 'Short demo runs help students explain the problem, show the solution, and build confidence before the final presentation.',
           size: 'landscape',
           tone: 'violet',
-          videoUrl: '/media/builders-gallery/pitch-rehearsal-and-final-demo.mp4',
+          videoUrl: withPublicAssetPath('/media/builders-gallery/pitch-rehearsal-and-final-demo.mp4'),
         },
       ],
     },
@@ -170,7 +174,7 @@ const content = {
           note: 'Short clips can capture the honest excitement that happens between testing, laughing, and showing someone a breakthrough.',
           size: 'story',
           tone: 'flash',
-          videoUrl: '/media/around-the-room/quick-reactions.mp4',
+          videoUrl: withPublicAssetPath('/media/around-the-room/quick-reactions.mp4'),
         },
         {
           badge: 'Mentor moment',
@@ -195,7 +199,7 @@ const content = {
           note: 'A close-up clip from the table keeps the hands-on side of the day visible, not just the final result.',
           size: 'landscape',
           tone: 'mint',
-          videoUrl: '/media/around-the-room/practical-build.mp4',
+          videoUrl: withPublicAssetPath('/media/around-the-room/practical-build.mp4'),
         },
         {
           badge: 'Playtest photo',
@@ -220,7 +224,7 @@ const content = {
           note: 'This quick clip shows how naturally teams gather, explain progress, and pull others into the moment.',
           size: 'square',
           tone: 'mint',
-          videoUrl: '/media/around-the-room/teams-inside-the-build-space.mp4',
+          videoUrl: withPublicAssetPath('/media/around-the-room/teams-inside-the-build-space.mp4'),
         },
         {
           badge: 'Focus photo',
@@ -245,7 +249,7 @@ const content = {
           note: 'A short screen-and-hardware clip turns early progress into something visible, testable, and easy to share.',
           size: 'square',
           tone: 'night',
-          videoUrl: '/media/around-the-room/first-version-in-motion.mp4',
+          videoUrl: withPublicAssetPath('/media/around-the-room/first-version-in-motion.mp4'),
         },
         {
           badge: 'Screen close-up',
@@ -270,7 +274,7 @@ const content = {
           note: 'Quick footage between formal presentations can show real personality, movement, and the natural rhythm of the event.',
           size: 'banner',
           tone: 'flash',
-          videoUrl: '/media/around-the-room/fast-demo-clips.mp4',
+          videoUrl: withPublicAssetPath('/media/around-the-room/fast-demo-clips.mp4'),
         },
         {
           badge: 'Live demo clip',
@@ -279,7 +283,7 @@ const content = {
           note: 'A short clip from the mentoring table captures the kind of explanation that makes the whole room pause and pay attention.',
           size: 'landscape',
           tone: 'blue',
-          videoUrl: '/media/around-the-room/mentor-demo-in-motion.mp4',
+          videoUrl: withPublicAssetPath('/media/around-the-room/mentor-demo-in-motion.mp4'),
         },
         {
           badge: 'Workshop photo',
@@ -1101,7 +1105,7 @@ const content = {
           type: 'video',
           title: 'مقاطع عرض الطلاب',
           note: 'فيديوهات الفرق المشاركة ستمنح كل فكرة حضورها الحقيقي خلال المسابقة.',
-          videoUrl: '/media/hero/student-pitch-clips.mp4',
+          videoUrl: withPublicAssetPath('/media/hero/student-pitch-clips.mp4'),
         },
       ],
     },
@@ -1148,7 +1152,7 @@ const content = {
           note: 'هنا يظهر المشروع وهو يتحول من فكرة إلى شيء يمكن رؤيته واختباره والإحساس بحضوره الحقيقي.',
           size: 'landscape',
           tone: 'blue',
-          videoUrl: '/media/builders-gallery/prototype-in-motion.mp4',
+          videoUrl: withPublicAssetPath('/media/builders-gallery/prototype-in-motion.mp4'),
         },
         {
           badge: 'صورة التنفيذ',
@@ -1173,7 +1177,7 @@ const content = {
           note: 'العرض القصير قبل التقديم النهائي يمنح الطلاب فرصة لشرح المشكلة وإبراز الحل وبناء الثقة أمام الآخرين.',
           size: 'landscape',
           tone: 'violet',
-          videoUrl: '/media/builders-gallery/pitch-rehearsal-and-final-demo.mp4',
+          videoUrl: withPublicAssetPath('/media/builders-gallery/pitch-rehearsal-and-final-demo.mp4'),
         },
       ],
     },
@@ -1200,7 +1204,7 @@ const content = {
           note: 'المقاطع القصيرة تلتقط الحماس الحقيقي بين الاختبار والضحك ومشاركة لحظة النجاح مع الآخرين.',
           size: 'story',
           tone: 'flash',
-          videoUrl: '/media/around-the-room/quick-reactions.mp4',
+          videoUrl: withPublicAssetPath('/media/around-the-room/quick-reactions.mp4'),
         },
         {
           badge: 'لحظة إرشاد',
@@ -1225,7 +1229,7 @@ const content = {
           note: 'اللقطة القريبة من طاولة العمل تُبقي الجانب العملي من اليوم حاضرًا، لا النتيجة النهائية فقط.',
           size: 'landscape',
           tone: 'mint',
-          videoUrl: '/media/around-the-room/practical-build.mp4',
+          videoUrl: withPublicAssetPath('/media/around-the-room/practical-build.mp4'),
         },
         {
           badge: 'صورة تجربة',
@@ -1250,7 +1254,7 @@ const content = {
           note: 'هذا المقطع القصير يوضح كيف تتجمع الفرق تلقائيًا لتشرح التقدم وتشارك اللحظة مع من حولها.',
           size: 'square',
           tone: 'mint',
-          videoUrl: '/media/around-the-room/teams-inside-the-build-space.mp4',
+          videoUrl: withPublicAssetPath('/media/around-the-room/teams-inside-the-build-space.mp4'),
         },
         {
           badge: 'صورة تركيز',
@@ -1275,7 +1279,7 @@ const content = {
           note: 'مقطع سريع من الشاشة والعتاد يحول التقدم المبكر إلى شيء مرئي وقابل للاختبار ويسهل مشاركته.',
           size: 'square',
           tone: 'night',
-          videoUrl: '/media/around-the-room/first-version-in-motion.mp4',
+          videoUrl: withPublicAssetPath('/media/around-the-room/first-version-in-motion.mp4'),
         },
         {
           badge: 'لقطة شاشة',
@@ -1300,7 +1304,7 @@ const content = {
           note: 'المشاهد القصيرة بين الفقرات الرسمية تكشف الشخصية الحقيقية للطلاب وحركة اليوم كما هي.',
           size: 'banner',
           tone: 'flash',
-          videoUrl: '/media/around-the-room/fast-demo-clips.mp4',
+          videoUrl: withPublicAssetPath('/media/around-the-room/fast-demo-clips.mp4'),
         },
         {
           badge: 'مقطع إرشادي حي',
@@ -1309,7 +1313,7 @@ const content = {
           note: 'هذا المقطع القصير من طاولة الإرشاد يلتقط نوع الشرح الذي يجعل القاعة كلها تتوقف للحظة وتنتبه.',
           size: 'landscape',
           tone: 'blue',
-          videoUrl: '/media/around-the-room/mentor-demo-in-motion.mp4',
+          videoUrl: withPublicAssetPath('/media/around-the-room/mentor-demo-in-motion.mp4'),
         },
         {
           badge: 'صورة ورشة',

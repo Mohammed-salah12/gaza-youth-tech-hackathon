@@ -9,6 +9,11 @@ export const defaultReviewStage = 'submitted'
 export const techFromPalestineUrl = 'https://techfrompalestine.org/'
 export const contactEmail = 'contact@techfrompalestine.org'
 export const contactPhone = '00972597262318'
+export const publicAssetBase = import.meta.env.BASE_URL || '/'
+
+export function withPublicAssetPath(path) {
+  return `${publicAssetBase}${String(path || '').replace(/^\//, '')}`
+}
 
 export const initialFormState = {
   submissionId: '',
