@@ -1,6 +1,7 @@
 export const routeStorageKey = 'gaza-youth-tech-hackathon-application'
 export const submissionsStorageKey = 'gaza-youth-tech-hackathon-submissions'
 export const languageStorageKey = 'gaza-youth-tech-hackathon-language'
+export const projectTrackerStorageKey = 'gaza-youth-tech-hackathon-project-tracker'
 
 export const defaultCategory = ''
 export const defaultStage = ''
@@ -17,6 +18,7 @@ export function withPublicAssetPath(path) {
 
 export const initialFormState = {
   submissionId: '',
+  projectId: '',
   fullName: '',
   age: '',
   applicationOwner: '',
@@ -41,7 +43,6 @@ export const initialFormState = {
   projectStage: defaultStage,
   problem: '',
   description: '',
-  recordingLink: '',
   projectLink: '',
   contact: '',
 }

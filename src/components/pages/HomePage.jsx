@@ -3,6 +3,7 @@ import { techFromPalestineUrl } from '../../config/appConfig'
 import { siteImages } from '../../config/siteImages'
 import { fetchAroundRoomMedia } from '../../utils/apiClient'
 import { FeatureCard, StatCard } from '../shared/Cards'
+import AcceptedProjectsSection from '../shared/AcceptedProjectsSection'
 import HackathonLockup from '../shared/HackathonLockup'
 import MediaSlotCard from '../shared/MediaSlotCard'
 import PartnerLogoBadge from '../shared/PartnerLogoBadge'
@@ -239,6 +240,14 @@ export default function HomePage({ content, language, onNavigate, onOpenVideo })
           </div>
         </div>
       </section>
+
+      <AcceptedProjectsSection
+        content={content}
+        language={language}
+        onNavigate={onNavigate}
+        onOpenVideo={onOpenVideo}
+        preview
+      />
 
       <section className="section section--media-burst" id="moments">
         <div className="container">

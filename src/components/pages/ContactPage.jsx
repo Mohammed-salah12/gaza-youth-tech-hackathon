@@ -123,7 +123,7 @@ export default function ContactPage({ content, language, onNavigate, onOpenVideo
               ))}
             </div>
 
-            <ApplicationForm content={content} language={language} />
+            <ApplicationForm content={content} language={language} onNavigate={onNavigate} />
           </div>
         </div>
       </section>
