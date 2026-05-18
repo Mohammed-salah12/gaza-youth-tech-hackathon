@@ -1,35 +1,96 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
   initialFormState,
+  projectTrackerStorageKey,
   routeStorageKey,
 } from '../../config/appConfig'
 import {
-  createSubmissionId,
+  formatSubmissionDate,
   getAdditionalTeamMembers,
   getAgeDetails,
+  getProjectVideoStatusKey,
+  getProjectVideoStatusLabel,
   isFilled,
   readStoredJson,
 } from '../../utils/appUtils'
 import { submitApplication } from '../../utils/apiClient'
 
-export default function ApplicationForm({ content, language }) {
-  const [formState, setFormState] = useState(() => {
-    return { ...initialFormState, ...readStoredJson(routeStorageKey, initialFormState) }
-  })
+const persistedFormFields = Object.keys(initialFormState)
+
+export default function ApplicationForm({ content, language, onNavigate }) {
+  const storedFormState = readStoredJson(routeStorageKey, initialFormState)
+  const [formState, setFormState] = useState(() => ({
+    ...initialFormState,
+    ...storedFormState,
+  }))
+  const [projectLookupId, setProjectLookupId] = useState(() => storedFormState.projectId || '')
   const [feedback, setFeedback] = useState('')
   const [showValidation, setShowValidation] = useState(false)
   const [activeStepIndex, setActiveStepIndex] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [projectVideoFile, setProjectVideoFile] = useState(null)
+  const [projectImageFiles, setProjectImageFiles] = useState([])
+  const [submissionSuccess, setSubmissionSuccess] = useState(null)
 
   const apiMessages =
     language === 'ar'
       ? {
-          submitting: 'جارٍ إرسال الطلب...',
+          submitting: 'جارٍ حفظ الطلب ورفع الملفات...',
           failed: 'تعذر حفظ الطلب في الخادم الآن. تأكد من تشغيل الباك إند ثم حاول مرة أخرى.',
         }
       : {
-          submitting: 'Saving your submission...',
+          submitting: 'Saving your submission and uploading files...',
           failed: 'The submission could not be saved to the server right now. Make sure the backend is running, then try again.',
+        }
+  const trackerPageCopy =
+    language === 'ar'
+      ? {
+          openTracker: 'افتح صفحة متابعة المشروع',
+          trackerHint:
+            'استخدم صفحة المتابعة الخفيفة لمعرفة حالة القبول ورفع الفيديو لاحقًا وتحديث التفاصيل المهمة فقط.',
+          savedIdeaTitle: 'تم حفظ الفكرة',
+          savedBuildTitle: 'تم حفظ المشروع للمراجعة',
+          savedIdeaBody:
+            'تم إنشاء رقم المشروع بنجاح. استخدم صفحة المتابعة لاحقًا لرفع فيديو المشروع ومعرفة حالة القبول.',
+          savedBuildBody:
+            'تم حفظ المشروع والملفات المرفوعة. استخدم صفحة المتابعة في أي وقت لمعرفة ما إذا كان المشروع قيد المراجعة أو مقبولًا أو مرفوضًا.',
+          openTrackerAction: 'اذهب إلى صفحة المتابعة',
+          stayHereAction: 'ابق هنا',
+          nextStepsLabel: 'الخطوات التالية',
+          ideaSteps: [
+            'احتفظ برقم المشروع في مكان آمن',
+            'أكمل بناء المشروع',
+            'ارجع إلى صفحة المتابعة لرفع الفيديو عندما يصبح جاهزًا',
+          ],
+          buildSteps: [
+            'احتفظ برقم المشروع للمتابعة',
+            'راجع حالة القبول من صفحة المتابعة',
+            'استبدل الفيديو أو الصور فقط إذا احتجت إلى تحديثها',
+          ],
+        }
+      : {
+          openTracker: 'Open tracker page',
+          trackerHint:
+            'Use the lighter follow-up page to check acceptance status, upload the video later, and update only the follow-up details.',
+          savedIdeaTitle: 'Idea saved successfully',
+          savedBuildTitle: 'Project saved for review',
+          savedIdeaBody:
+            'Your project ID is ready. Use the tracker page later to upload the project video and check the acceptance status.',
+          savedBuildBody:
+            'Your project and uploaded files were saved. Use the tracker page anytime to check whether it is under review, accepted, or declined.',
+          openTrackerAction: 'Go to tracker page',
+          stayHereAction: 'Stay here',
+          nextStepsLabel: 'What to do next',
+          ideaSteps: [
+            'Keep the project ID somewhere safe',
+            'Finish building the project',
+            'Come back to the tracker page to upload the video when it is ready',
+          ],
+          buildSteps: [
+            'Keep the project ID for follow-up',
+            'Use the tracker page to check acceptance status',
+            'Replace the video or images only if you need to update them',
+          ],
         }
 
   useEffect(() => {
@@ -42,11 +103,44 @@ export default function ApplicationForm({ content, language }) {
   const stagesById = Object.fromEntries(
     content.form.stages.map((item) => [item.id, item.label]),
   )
+  const reviewStagesById = Object.fromEntries(
+    content.dashboard.reviewStages.map((item) => [item.id, item.label]),
+  )
   const ageDetails = getAgeDetails(formState.age)
   const effectiveApplicationOwner = ageDetails.isUnder13 ? 'adult' : formState.applicationOwner
   const needsAdultSupport = effectiveApplicationOwner === 'adult'
   const additionalTeamMembers = getAdditionalTeamMembers(formState, content.form)
   const hasMentor = formState.mentorEnabled === 'yes'
+  const isIdeaStage = formState.projectStage === 'idea'
+  const hasUploadedProjectVideo = Boolean(formState.projectVideo?.url || formState.projectVideo?.path)
+  const hasPendingProjectVideo = Boolean(projectVideoFile)
+  const requiresProjectVideoNow = isFilled(formState.projectStage) && !isIdeaStage
+  const projectVideoIsRequired =
+    requiresProjectVideoNow && !hasUploadedProjectVideo && !hasPendingProjectVideo
+  const projectVideoStatusKey = formState.projectVideoStatus || getProjectVideoStatusKey(formState)
+  const projectVideoStatusLabel = getProjectVideoStatusLabel(projectVideoStatusKey, content.form)
+  const projectReviewStatusLabel =
+    reviewStagesById[formState.reviewStage] || content.form.projectStatusFallback
+  const projectVideoDeadline = formState.videoFollowUpDeadline
+    ? formatSubmissionDate(formState.videoFollowUpDeadline, language)
+    : ''
+  const selectedStage = content.form.stages.find((stage) => stage.id === formState.projectStage) || null
+  const stageFlow = !isFilled(formState.projectStage)
+    ? content.form.stageFlow.empty
+    : isIdeaStage
+      ? content.form.stageFlow.idea
+      : content.form.stageFlow.build
+  const pitchSectionTitle = isIdeaStage
+    ? content.form.sections.pitch.ideaTitle
+    : content.form.sections.pitch.buildTitle
+  const pitchSectionText = isIdeaStage
+    ? content.form.sections.pitch.ideaText
+    : content.form.sections.pitch.buildText
+  const submitLabel = isIdeaStage
+    ? content.form.submitIdea
+    : requiresProjectVideoNow
+      ? content.form.submitBuild
+      : content.form.submit
   const applicationPathMessage = !ageDetails.hasAge
     ? content.form.applicationCard.empty
     : ageDetails.isUnder13
@@ -57,6 +151,38 @@ export default function ApplicationForm({ content, language }) {
   const contactHelperText = needsAdultSupport
     ? content.form.helpers.contactAdult
     : content.form.helpers.contactSelf
+  const savedProjectVideoItems = formState.projectVideo?.url ? [formState.projectVideo] : []
+  const savedProjectImageItems = formState.projectImages || []
+
+  const openTrackerPage = (projectIdValue = '') => {
+    const resolvedProjectId = String(projectIdValue || projectLookupId || formState.projectId || '')
+      .trim()
+      .toUpperCase()
+
+    if (!resolvedProjectId) {
+      setFeedback(content.form.feedback.projectIdNeeded)
+      return
+    }
+
+    window.localStorage.setItem(projectTrackerStorageKey, resolvedProjectId)
+    onNavigate('tracker')
+  }
+
+  const handleProjectVideoFilesChange = (fileList) => {
+    setProjectVideoFile(fileList?.[0] || null)
+  }
+
+  const handleProjectImageFilesChange = (fileList) => {
+    setProjectImageFiles(Array.from(fileList || []))
+  }
+
+  const clearSelectedProjectVideo = () => {
+    setProjectVideoFile(null)
+  }
+
+  const clearSelectedProjectImages = () => {
+    setProjectImageFiles([])
+  }
 
   const requiredFieldDefinitions = useMemo(
     () => {
@@ -78,13 +204,16 @@ export default function ApplicationForm({ content, language }) {
         { key: 'projectName', label: content.form.fields.projectName, value: formState.projectName },
         { key: 'problem', label: content.form.fields.problem, value: formState.problem },
         { key: 'description', label: content.form.fields.description, value: formState.description },
-        {
-          key: 'recordingLink',
-          label: content.form.fields.recordingLink,
-          value: formState.recordingLink,
-        },
         { key: 'contact', label: content.form.fields.contact, value: formState.contact },
       ]
+
+      if (projectVideoIsRequired) {
+        fields.splice(9, 0, {
+          key: 'projectVideo',
+          label: content.form.fields.projectVideo,
+          value: hasUploadedProjectVideo || hasPendingProjectVideo ? 'yes' : '',
+        })
+      }
 
       if (needsAdultSupport) {
         fields.splice(3, 0, {
@@ -138,11 +267,12 @@ export default function ApplicationForm({ content, language }) {
       return fields
     },
     [
+      additionalTeamMembers,
       content.form.fields,
       effectiveApplicationOwner,
-      formState.age,
       formState.adultName,
       formState.adultRole,
+      formState.age,
       formState.category,
       formState.city,
       formState.contact,
@@ -152,18 +282,19 @@ export default function ApplicationForm({ content, language }) {
       formState.problem,
       formState.projectName,
       formState.projectStage,
-      formState.recordingLink,
-      formState.teamMemberTwoName,
-      formState.teamMemberTwoAge,
-      formState.teamMemberTwoCity,
-      formState.teamMemberTwoContact,
-      formState.teamMemberThreeName,
       formState.teamMemberThreeAge,
       formState.teamMemberThreeCity,
       formState.teamMemberThreeContact,
-      additionalTeamMembers,
+      formState.teamMemberThreeName,
+      formState.teamMemberTwoAge,
+      formState.teamMemberTwoCity,
+      formState.teamMemberTwoContact,
+      formState.teamMemberTwoName,
       hasMentor,
+      hasPendingProjectVideo,
+      hasUploadedProjectVideo,
       needsAdultSupport,
+      projectVideoIsRequired,
     ],
   )
   const missingRequiredFields = requiredFieldDefinitions.filter(({ value }) => !isFilled(value))
@@ -244,11 +375,15 @@ export default function ApplicationForm({ content, language }) {
   ]
 
   const pitchStepFields = [
-    {
-      key: 'recordingLink',
-      label: content.form.fields.recordingLink,
-      value: formState.recordingLink,
-    },
+    ...(projectVideoIsRequired
+      ? [
+          {
+            key: 'projectVideo',
+            label: content.form.fields.projectVideo,
+            value: hasUploadedProjectVideo || hasPendingProjectVideo ? 'yes' : '',
+          },
+        ]
+      : []),
     { key: 'contact', label: content.form.fields.contact, value: formState.contact },
   ]
 
@@ -402,25 +537,59 @@ export default function ApplicationForm({ content, language }) {
       return
     }
 
-    const submissionId = formState.submissionId || createSubmissionId()
     const nextFormState = {
       ...formState,
-      submissionId,
       applicationOwner: effectiveApplicationOwner,
     }
+    const payload = new FormData()
+
+    persistedFormFields.forEach((field) => {
+      payload.append(field, String(nextFormState[field] ?? ''))
+    })
+
+    if (projectVideoFile) {
+      payload.append('projectVideo', projectVideoFile)
+    }
+
+    projectImageFiles.forEach((file) => {
+      payload.append('projectImages', file)
+    })
+
     setIsSubmitting(true)
     setFeedback(apiMessages.submitting)
 
     try {
-      const savedSubmission = await submitApplication(nextFormState)
+      const savedSubmission = await submitApplication(payload)
+      const savedProjectId = savedSubmission.projectId || savedSubmission.submissionId
 
-      setFormState((current) => ({
-        ...current,
-        submissionId: savedSubmission.id,
+      setFormState({
+        ...initialFormState,
+        ...savedSubmission,
         applicationOwner: effectiveApplicationOwner,
-      }))
+      })
+      setProjectLookupId(savedProjectId)
+      setProjectVideoFile(null)
+      setProjectImageFiles([])
       setShowValidation(false)
-      setFeedback(content.form.feedback.prepared)
+      window.localStorage.setItem(projectTrackerStorageKey, savedProjectId)
+      setFeedback('')
+      setSubmissionSuccess({
+        projectId: savedProjectId,
+        reviewStatus:
+          reviewStagesById[savedSubmission.reviewStage] || content.form.projectStatusFallback,
+        title:
+          savedSubmission.projectStage === 'idea' && !savedSubmission.projectVideo?.url
+            ? trackerPageCopy.savedIdeaTitle
+            : trackerPageCopy.savedBuildTitle,
+        body:
+          savedSubmission.projectStage === 'idea' && !savedSubmission.projectVideo?.url
+            ? trackerPageCopy.savedIdeaBody
+            : trackerPageCopy.savedBuildBody,
+        steps:
+          savedSubmission.projectStage === 'idea' && !savedSubmission.projectVideo?.url
+            ? trackerPageCopy.ideaSteps
+            : trackerPageCopy.buildSteps,
+      })
     } catch (error) {
       setFeedback(error.message || apiMessages.failed)
     } finally {
@@ -430,8 +599,12 @@ export default function ApplicationForm({ content, language }) {
 
   const handleReset = () => {
     setFormState(initialFormState)
+    setProjectLookupId('')
+    setProjectVideoFile(null)
+    setProjectImageFiles([])
     setShowValidation(false)
     setActiveStepIndex(0)
+    setSubmissionSuccess(null)
     setFeedback(content.form.feedback.cleared)
     window.localStorage.removeItem(routeStorageKey)
   }
@@ -453,6 +626,52 @@ export default function ApplicationForm({ content, language }) {
           </div>
 
           <div className="save-status">{content.form.saveNote}</div>
+
+          <div className="project-tracker-card">
+            <div className="project-tracker-card__copy">
+              <strong>{content.form.projectTrackerTitle}</strong>
+              <p>{content.form.projectTrackerText}</p>
+            </div>
+            <div className="project-tracker-card__actions">
+              <input
+                value={projectLookupId}
+                onChange={(event) => setProjectLookupId(event.target.value)}
+                placeholder={content.form.placeholders.projectId}
+                aria-label={content.form.fields.projectId}
+              />
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => openTrackerPage(projectLookupId)}
+              >
+                {trackerPageCopy.openTracker}
+              </button>
+            </div>
+            <small className="field-helper">{trackerPageCopy.trackerHint}</small>
+          </div>
+
+          {isFilled(formState.projectId) ? (
+            <div className="tracking-banner">
+              <div>
+                <span>{content.form.fields.projectId}</span>
+                <strong>{formState.projectId}</strong>
+              </div>
+              <div>
+                <span>{content.form.fields.projectStatus}</span>
+                <strong>{projectReviewStatusLabel}</strong>
+              </div>
+              <div>
+                <span>{content.form.fields.projectVideoStatus}</span>
+                <strong>{projectVideoStatusLabel}</strong>
+              </div>
+              {projectVideoDeadline ? (
+                <div>
+                  <span>{content.form.followUpDeadlineLabel}</span>
+                  <strong>{projectVideoDeadline}</strong>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div className="progress-card">
@@ -821,6 +1040,44 @@ export default function ApplicationForm({ content, language }) {
                 ))}
               </div>
             </div>
+
+            <article
+              className={`stage-flow-card ${
+                isFilled(formState.projectStage) ? 'stage-flow-card--selected' : ''
+              } ${isIdeaStage ? 'stage-flow-card--idea' : requiresProjectVideoNow ? 'stage-flow-card--build' : ''}`}
+            >
+              <span className="card-eyebrow">{content.form.stageFlow.eyebrow}</span>
+              <strong>
+                {selectedStage
+                  ? `${selectedStage.label}: ${stageFlow.title}`
+                  : stageFlow.title}
+              </strong>
+              <p>{stageFlow.text}</p>
+              {stageFlow.steps?.length ? (
+                <div className="stage-flow-list">
+                  {stageFlow.steps.map((step) => (
+                    <div key={step} className="stage-flow-step">
+                      <span aria-hidden="true" />
+                      <strong>{step}</strong>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              <div className="stage-flow-project-note">
+                <span>{content.form.fields.projectId}</span>
+                <strong>
+                  {formState.projectId
+                    ? formState.projectId
+                    : content.form.stageFlow.projectIdPending}
+                </strong>
+                {formState.projectId ? (
+                  <>
+                    <span>{content.form.fields.projectStatus}</span>
+                    <strong>{projectReviewStatusLabel}</strong>
+                  </>
+                ) : null}
+              </div>
+            </article>
           </FormSection>
         ) : null}
 
@@ -899,54 +1156,140 @@ export default function ApplicationForm({ content, language }) {
         {activeStepIndex === 3 ? (
           <FormSection
             step={content.form.sections.pitch.step}
-            title={content.form.sections.pitch.title}
-            text={content.form.sections.pitch.text}
+            title={pitchSectionTitle}
+            text={pitchSectionText}
           >
-            <div className="field-grid">
-              <div
-                className={`field ${
-                  showValidation && !isFilled(formState.recordingLink) ? 'is-invalid' : ''
-                }`}
-              >
-                <div className="field-label">
-                  <strong>{content.form.fields.recordingLink}</strong>
+            {requiresProjectVideoNow ? (
+              <>
+                <div className="field-grid field-grid--stacked">
+                  <FileUploadField
+                    label={content.form.fields.projectVideo}
+                    helper={content.form.helpers.projectVideoRequired}
+                    accept="video/*"
+                    invalid={showValidation && projectVideoIsRequired}
+                    requiredText={content.form.requiredLabel}
+                    actionLabel={content.form.uploadVideoAction}
+                    replaceLabel={content.form.replaceVideoAction}
+                    clearLabel={content.form.clearSelectedVideo}
+                    emptyStateText={content.form.uploadVideoEmpty}
+                    selectedFiles={projectVideoFile ? [projectVideoFile] : []}
+                    savedItems={savedProjectVideoItems}
+                    savedLabel={content.form.savedVideoLabel}
+                    onFilesChange={handleProjectVideoFilesChange}
+                    onClear={clearSelectedProjectVideo}
+                  />
+
+                  <Field
+                    label={content.form.fields.contact}
+                    name="contact"
+                    value={formState.contact}
+                    onChange={handleChange}
+                    placeholder={content.form.placeholders.contact}
+                    helper={contactHelperText}
+                    required
+                    invalid={showValidation && !isFilled(formState.contact)}
+                  />
                 </div>
-                <input
-                  name="recordingLink"
+
+                <div className="field-grid field-grid--stacked">
+                  <FileUploadField
+                    label={content.form.fields.projectImages}
+                    helper={content.form.helpers.projectImages}
+                    accept="image/*"
+                    multiple
+                    optionalText={content.form.optionalLabel}
+                    actionLabel={content.form.uploadImagesAction}
+                    replaceLabel={content.form.replaceImagesAction}
+                    clearLabel={content.form.clearSelectedImages}
+                    emptyStateText={content.form.uploadImagesEmpty}
+                    selectedFiles={projectImageFiles}
+                    savedItems={savedProjectImageItems}
+                    savedLabel={content.form.savedImagesLabel}
+                    limitNote={content.form.imageLimitNote}
+                    onFilesChange={handleProjectImageFilesChange}
+                    onClear={clearSelectedProjectImages}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <article className="upload-guidance-card upload-guidance-card--idea">
+                  <strong>{content.form.ideaStageUploadTitle}</strong>
+                  <p>{content.form.ideaStageUploadText}</p>
+                  <div className="stage-flow-list">
+                    {content.form.ideaStageFollowUpSteps.map((step) => (
+                      <div key={step} className="stage-flow-step">
+                        <span aria-hidden="true" />
+                        <strong>{step}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+
+                <div className="field-grid">
+                  <Field
+                    label={content.form.fields.contact}
+                    name="contact"
+                    value={formState.contact}
+                    onChange={handleChange}
+                    placeholder={content.form.placeholders.contact}
+                    helper={contactHelperText}
+                    required
+                    invalid={showValidation && !isFilled(formState.contact)}
+                  />
+                  <Field
+                    label={content.form.fields.projectLink}
+                    name="projectLink"
+                    type="url"
+                    value={formState.projectLink}
+                    onChange={handleChange}
+                    placeholder={content.form.placeholders.projectLink}
+                    helper={content.form.helpers.projectLink}
+                    optionalText={content.form.optionalLabel}
+                  />
+                </div>
+              </>
+            )}
+
+            {requiresProjectVideoNow ? (
+              <div className="field-grid">
+                <Field
+                  label={content.form.fields.projectLink}
+                  name="projectLink"
                   type="url"
-                  value={formState.recordingLink}
+                  value={formState.projectLink}
                   onChange={handleChange}
-                  placeholder={content.form.placeholders.recordingLink}
-                  aria-invalid={showValidation && !isFilled(formState.recordingLink)}
-                  required
+                  placeholder={content.form.placeholders.projectLink}
+                  helper={content.form.helpers.projectLink}
+                  optionalText={content.form.optionalLabel}
                 />
-                <small className="field-helper">{content.form.helpers.recordingLink}</small>
               </div>
+            ) : null}
 
-              <Field
-                label={content.form.fields.contact}
-                name="contact"
-                value={formState.contact}
-                onChange={handleChange}
-                placeholder={content.form.placeholders.contact}
-                helper={contactHelperText}
-                required
-                invalid={showValidation && !isFilled(formState.contact)}
-              />
-            </div>
+            {requiresProjectVideoNow ? (
+              <article className="upload-guidance-card">
+                <strong>{content.form.videoPolicyTitle}</strong>
+                <p>{content.form.videoPolicyText}</p>
+              </article>
+            ) : (
+              <article className="upload-guidance-card upload-guidance-card--follow-up">
+                <strong>{content.form.followUpProjectIdTitle}</strong>
+                <p>
+                  {isFilled(formState.projectId)
+                    ? `${content.form.fields.projectId}: ${formState.projectId}`
+                    : content.form.followUpProjectIdText}
+                </p>
+              </article>
+            )}
 
-            <div className="field-grid">
-              <Field
-                label={content.form.fields.projectLink}
-                name="projectLink"
-                type="url"
-                value={formState.projectLink}
-                onChange={handleChange}
-                placeholder={content.form.placeholders.projectLink}
-                helper={content.form.helpers.projectLink}
-                optionalText={content.form.optionalLabel}
+            {hasUploadedProjectVideo || formState.projectImages?.length ? (
+              <SavedProjectMedia
+                content={content}
+                formState={formState}
+                language={language}
+                projectVideoStatusLabel={projectVideoStatusLabel}
               />
-            </div>
+            ) : null}
           </FormSection>
         ) : null}
 
@@ -961,7 +1304,7 @@ export default function ApplicationForm({ content, language }) {
           </button>
           {isLastStep ? (
             <button type="submit" className="primary-button" disabled={isSubmitting}>
-              {isSubmitting ? apiMessages.submitting : content.form.submit}
+              {isSubmitting ? apiMessages.submitting : submitLabel}
             </button>
           ) : (
             <button type="button" className="primary-button" onClick={handleNextStep}>
@@ -981,6 +1324,20 @@ export default function ApplicationForm({ content, language }) {
 
         {feedback ? <p className="form-feedback">{feedback}</p> : null}
       </form>
+
+      {submissionSuccess ? (
+        <SubmissionSuccessModal
+          content={trackerPageCopy}
+          submissionSuccess={submissionSuccess}
+          projectIdLabel={content.form.fields.projectId}
+          projectStatusLabel={content.form.fields.projectStatus}
+          onClose={() => setSubmissionSuccess(null)}
+          onOpenTracker={() => {
+            openTrackerPage(submissionSuccess.projectId)
+            setSubmissionSuccess(null)
+          }}
+        />
+      ) : null}
     </div>
   )
 }
@@ -1000,7 +1357,7 @@ function FormSection({ step, title, text, children }) {
   )
 }
 
-function Field({ label, helper, optionalText, invalid = false, ...props }) {
+export function Field({ label, helper, optionalText, invalid = false, ...props }) {
   return (
     <label className={`field ${invalid ? 'is-invalid' : ''}`}>
       <div className="field-label">
@@ -1010,5 +1367,206 @@ function Field({ label, helper, optionalText, invalid = false, ...props }) {
       <input {...props} aria-invalid={invalid || undefined} />
       {helper ? <small className="field-helper">{helper}</small> : null}
     </label>
+  )
+}
+
+export function FileUploadField({
+  label,
+  helper,
+  optionalText,
+  invalid = false,
+  requiredText,
+  actionLabel,
+  replaceLabel,
+  clearLabel,
+  emptyStateText,
+  savedLabel,
+  selectedFiles = [],
+  savedItems = [],
+  accept,
+  multiple = false,
+  limitNote = '',
+  onFilesChange,
+  onClear,
+}) {
+  const inputId = useId()
+  const inputRef = useRef(null)
+  const hasSelectedFiles = selectedFiles.length > 0
+  const hasSavedItems = savedItems.length > 0
+  const actionCopy = hasSelectedFiles || hasSavedItems ? replaceLabel : actionLabel
+
+  return (
+    <div className={`upload-field ${invalid ? 'is-invalid' : ''}`}>
+      <div className="field-label">
+        <strong>{label}</strong>
+        {requiredText ? <small>{requiredText}</small> : optionalText ? <small>{optionalText}</small> : null}
+      </div>
+
+      <label htmlFor={inputId} className={`upload-field__dropzone ${hasSelectedFiles ? 'has-selection' : ''}`}>
+        <input
+          id={inputId}
+          ref={inputRef}
+          className="upload-field__input"
+          type="file"
+          accept={accept}
+          multiple={multiple}
+          onChange={(event) => onFilesChange(event.target.files)}
+        />
+        <div className="upload-field__copy">
+          <strong>{actionCopy}</strong>
+          <p>{emptyStateText}</p>
+        </div>
+        <span className="upload-field__action">{actionCopy}</span>
+      </label>
+
+      {helper ? <small className="field-helper">{helper}</small> : null}
+      {limitNote ? <small className="field-helper">{limitNote}</small> : null}
+
+      {hasSavedItems ? (
+        <div className="upload-field__saved">
+          <span>{savedLabel}</span>
+          <strong>
+            {savedItems.length === 1
+              ? savedItems[0].originalName || savedItems[0].url || savedLabel
+              : `${savedItems.length} ${savedLabel}`}
+          </strong>
+        </div>
+      ) : null}
+
+      {hasSelectedFiles ? (
+        <div className="selected-file-list">
+          {selectedFiles.map((file) => (
+            <span key={`${file.name}-${file.size}`} className="selected-file-chip">
+              {file.name}
+              <small>{formatFileSize(file.size)}</small>
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {hasSelectedFiles ? (
+        <button
+          type="button"
+          className="upload-field__clear"
+          onClick={() => {
+            if (inputRef.current) {
+              inputRef.current.value = ''
+            }
+
+            onClear()
+          }}
+        >
+          {clearLabel}
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
+function formatFileSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return '0 KB'
+  }
+
+  if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`
+}
+
+export function SavedProjectMedia({ content, formState, language, projectVideoStatusLabel }) {
+  return (
+    <article className="saved-project-media">
+      <div className="saved-project-media__head">
+        <div>
+          <strong>{content.form.savedMediaTitle}</strong>
+          <p>{content.form.savedMediaText}</p>
+        </div>
+        <span className="saved-project-media__status">{projectVideoStatusLabel}</span>
+      </div>
+
+      {formState.projectVideo?.url ? (
+        <div className="saved-project-media__video">
+          <video controls preload="metadata" src={formState.projectVideo.url} />
+          <a href={formState.projectVideo.url} target="_blank" rel="noreferrer">
+            {language === 'ar'
+              ? formState.projectVideo.originalName || content.form.openUploadedVideo
+              : formState.projectVideo.originalName || content.form.openUploadedVideo}
+          </a>
+        </div>
+      ) : null}
+
+      {formState.projectImages?.length ? (
+        <div className="saved-project-media__images">
+          {formState.projectImages.map((image) => (
+            <a
+              key={image.url}
+              href={image.url}
+              target="_blank"
+              rel="noreferrer"
+              className="saved-project-media__image"
+            >
+              <img src={image.url} alt={image.originalName || content.form.fields.projectImages} />
+            </a>
+          ))}
+        </div>
+      ) : null}
+    </article>
+  )
+}
+
+function SubmissionSuccessModal({
+  content,
+  submissionSuccess,
+  projectIdLabel,
+  projectStatusLabel,
+  onClose,
+  onOpenTracker,
+}) {
+  return (
+    <div className="success-modal" role="dialog" aria-modal="true" aria-labelledby="submission-success-title">
+      <div className="success-modal__panel">
+        <button type="button" className="success-modal__close" onClick={onClose} aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+
+        <span className="card-eyebrow">{submissionSuccess.reviewStatus}</span>
+        <h3 id="submission-success-title">{submissionSuccess.title}</h3>
+        <p>{submissionSuccess.body}</p>
+
+        <div className="success-modal__summary">
+          <div>
+            <span>{projectIdLabel}</span>
+            <strong>{submissionSuccess.projectId}</strong>
+          </div>
+          <div>
+            <span>{projectStatusLabel}</span>
+            <strong>{submissionSuccess.reviewStatus}</strong>
+          </div>
+        </div>
+
+        <div className="success-modal__steps">
+          <strong>{content.nextStepsLabel}</strong>
+          <div className="stage-flow-list">
+            {submissionSuccess.steps.map((step) => (
+              <div key={step} className="stage-flow-step">
+                <span aria-hidden="true" />
+                <strong>{step}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="success-modal__actions">
+          <button type="button" className="primary-button" onClick={onOpenTracker}>
+            {content.openTrackerAction}
+          </button>
+          <button type="button" className="secondary-button" onClick={onClose}>
+            {content.stayHereAction}
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }

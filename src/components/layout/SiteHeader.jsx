@@ -1,7 +1,5 @@
-import { techFromPalestineUrl } from '../../config/appConfig'
 import { siteImages } from '../../config/siteImages'
 import { buildLanguageHref } from '../../utils/appUtils'
-import PartnerLogoBadge from '../shared/PartnerLogoBadge'
 
 export default function SiteHeader({
   content,
@@ -11,12 +9,16 @@ export default function SiteHeader({
   onNavigate,
   onToggleMenu,
 }) {
+  const trackerLabel = currentLanguage === 'ar' ? 'متابعة المشروع' : 'Track project'
+  const acceptedLabel = currentLanguage === 'ar' ? 'المشاريع المقبولة' : 'Accepted projects'
   const navItems = [
     { label: content.nav.home, page: 'home', section: '' },
+    { label: content.nav.accepted || acceptedLabel, page: 'accepted', section: '' },
     { label: content.nav.tracks, page: 'home', section: 'tracks' },
     { label: content.nav.partners, page: 'home', section: 'partners' },
     { label: content.nav.faq, page: 'home', section: 'faq' },
     { label: content.nav.contact, page: 'contact', section: '' },
+    { label: content.nav.track || trackerLabel, page: 'tracker', section: '' },
     { label: content.nav.dashboard, page: 'dashboard', section: '' },
   ]
 
@@ -24,63 +26,17 @@ export default function SiteHeader({
     <header className="site-header">
       <div className="container nav-bar">
         <div className="brand">
-          <div className="brand-stack">
-            <button
-              type="button"
-              className="brand-home"
-              onClick={() => onNavigate('home')}
-              aria-label={content.nav.home}
-            >
-              <div className="brand-copy">
-                <span className="brand-kicker">{content.brandKicker}</span>
-                <strong>{content.brandTitle}</strong>
-              </div>
-            </button>
-
-            <div className="brand-logos">
-              <PartnerLogoBadge
-                logo={siteImages.brand.codeSproutsLogo}
-                alt="Code Sprouts Palestine logo"
-                name="Code Sprouts Palestine"
-                variant="nav"
-              />
-              <PartnerLogoBadge
-                logo={siteImages.brand.techFromPalestineLogo}
-                alt="Tech From Palestine logo"
-                name="Tech From Palestine"
-                href={techFromPalestineUrl}
-                variant="nav"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="header-actions">
-          <div className="language-switcher" aria-label="Language switcher">
-            <a
-              className={`language-chip ${currentLanguage === 'en' ? 'is-active' : ''}`}
-              href={buildLanguageHref('en')}
-            >
-              {content.languageSwitch.en}
-            </a>
-            <a
-              className={`language-chip ${currentLanguage === 'ar' ? 'is-active' : ''}`}
-              href={buildLanguageHref('ar')}
-            >
-              {content.languageSwitch.ar}
-            </a>
-          </div>
-
           <button
             type="button"
-            className="menu-button"
-            onClick={onToggleMenu}
-            aria-expanded={menuOpen}
-            aria-label="Toggle navigation"
+            className="brand-home"
+            onClick={() => onNavigate('home')}
+            aria-label={content.nav.home}
           >
-            <span />
-            <span />
-            <span />
+            <img
+              className="brand-mark"
+              src={siteImages.brand.hackathonLogo}
+              alt={content.hackathonLogoAlt}
+            />
           </button>
         </div>
 
@@ -113,6 +69,35 @@ export default function SiteHeader({
             {content.nav.apply}
           </button>
         </nav>
+
+        <div className="header-actions">
+          <div className="language-switcher" aria-label="Language switcher">
+            <a
+              className={`language-chip ${currentLanguage === 'en' ? 'is-active' : ''}`}
+              href={buildLanguageHref('en')}
+            >
+              {content.languageSwitch.en}
+            </a>
+            <a
+              className={`language-chip ${currentLanguage === 'ar' ? 'is-active' : ''}`}
+              href={buildLanguageHref('ar')}
+            >
+              {content.languageSwitch.ar}
+            </a>
+          </div>
+
+          <button
+            type="button"
+            className="menu-button"
+            onClick={onToggleMenu}
+            aria-expanded={menuOpen}
+            aria-label="Toggle navigation"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
       </div>
     </header>
   )

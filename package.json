@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "dev:server": "npm --prefix backend run dev",
-    "server": "npm --prefix backend start",
+    "dev": "node ./scripts/dev.mjs",
+    "dev:client": "vite --host 0.0.0.0",
+    "dev:server": "node ./scripts/backend-command.mjs dev",
+    "server": "node ./scripts/backend-command.mjs start",
     "build": "vite build",
     "preview": "vite preview"
   },

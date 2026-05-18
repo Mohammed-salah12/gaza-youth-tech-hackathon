@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import SiteFooter from './components/layout/SiteFooter'
 import SiteHeader from './components/layout/SiteHeader'
+import AcceptedProjectsPage from './components/pages/AcceptedProjectsPage'
 import ContactPage from './components/pages/ContactPage'
 import DashboardPage from './components/pages/DashboardPage'
 import HomePage from './components/pages/HomePage'
+import ProjectTrackerPage from './components/pages/ProjectTrackerPage'
 import VideoPreviewModal from './components/shared/VideoPreviewModal'
 import {
   languageStorageKey,
@@ -43,7 +45,7 @@ const content = {
       eyebrow: 'Youth innovation from Gaza',
       title: 'Build what Gaza needs next.',
       text:
-        'A youth-first hackathon for builders under 18. Share the idea, show the work, and add a short voice or video pitch.',
+        'A youth-first hackathon for builders under 18. Share the idea, show the work, and upload project media directly to the website.',
       primary: 'Start your application',
       secondary: 'Explore the hackathon',
       stats: [
@@ -60,7 +62,7 @@ const content = {
       quickList: [
         'Submit a project idea or early prototype',
         'Explain the problem and your solution clearly',
-        'Add one short recording link to support your story',
+        'Upload project media here now, or later if the project is still at idea stage',
       ],
       // Developer note: the image for these cards now lives in `src/config/siteImages.js`.
       mediaCards: [
@@ -153,10 +155,10 @@ const content = {
     },
     mediaMoments: {
       eyebrow: 'Around the room',
-      title: 'Random moments, reactions, and quick clips from the day',
+      title: 'Moments, reactions, and quick clips from the build process',
       body:
-        'Not every strong memory follows the project timeline. This section captures the atmosphere around it: crowd energy, mentor conversations, surprise reactions, and short videos that make the event feel alive.',
-      notes: ['Crowd shots', 'Mentor clips', 'Reaction moments', 'Celebration'],
+        'This section is about the project implementation period, not the final hackathon day. It captures the small moments around building, testing, debugging, mentor feedback, and the quick reactions that happen while ideas turn into working projects.',
+      notes: ['Build progress', 'Mentor feedback', 'Testing moments', 'Team reactions'],
       loadMoreLabel: 'Load more moments',
       cards: [
         {
@@ -618,7 +620,8 @@ const content = {
         },
         {
           question: 'What kind of recording should I send?',
-          answer: 'Share one voice note or short video link, up to 3 minutes, to introduce your project idea and why it matters.',
+          answer:
+            'Upload a short project video directly on the website. If the project is still at idea stage, submit now and come back later with your project ID to add the video.',
         },
       ],
     },
@@ -626,7 +629,7 @@ const content = {
       eyebrow: 'Ready to take the next step?',
       title: 'Open the application page and shape your submission.',
       body:
-        'The application experience now guides the participant through categories, project stage, idea clarity, and the short supporting pitch link.',
+        'The application experience now guides the participant through categories, project stage, idea clarity, and hosted project media uploads.',
       button: 'Go to contact and apply',
     },
     contactHero: {
@@ -638,7 +641,7 @@ const content = {
       secondary: 'Back to landing page',
       facts: [
         { label: 'Accepted formats', value: 'Idea, prototype, or early build' },
-        { label: 'Pitch support', value: 'Voice or video link up to 3 minutes' },
+        { label: 'Project media', value: 'Hosted uploads on the website' },
         { label: 'Audience', value: 'Students, parents, and mentors' },
       ],
     },
@@ -680,13 +683,13 @@ const content = {
         'A project name that feels clear and memorable',
         'A simple explanation of the problem',
         'A short description of how the idea works',
-        'A recording link that sounds personal and confident',
+        'Project images or a short project video when the build is ready',
       ],
       standoutTitle: 'What makes a submission stronger',
       standout: [
         'Show why the project matters for people around you',
         'Keep the explanation simple instead of overly technical',
-        'Use the recording to tell the story, not to repeat the form',
+        'Use the uploaded media to show real progress, not just repeat the form',
       ],
       eligibilityTitle: 'Quick eligibility view',
       eligibility: [
@@ -709,6 +712,35 @@ const content = {
       back: 'Back',
       next: 'Continue',
       nextStepReady: 'This step looks good. You can move to the next one.',
+      stageFlow: {
+        eyebrow: 'What happens next',
+        projectIdPending: 'Project ID will be created after you save',
+        empty: {
+          title: 'Choose the project stage first',
+          text: 'The next steps change based on whether this is still an idea or already a prototype or working project.',
+          steps: [],
+        },
+        idea: {
+          title: 'Save the idea, then continue the project later',
+          text:
+            'Idea-stage teams can continue without uploading a video now. After saving, they receive a project ID to return later with the finished project video.',
+          steps: [
+            'Continue to the next section without a video upload',
+            'Build the project after saving the application',
+            'Record the project video later and return with the same project ID',
+          ],
+        },
+        build: {
+          title: 'Upload the project video in this submission',
+          text:
+            'Prototype and working projects should continue with the video upload path so the judges can see the current build now.',
+          steps: [
+            'Continue to the next section',
+            'Upload the real project video there',
+            'Save the application and keep the project ID for any later follow-up',
+          ],
+        },
+      },
       sections: {
         basics: {
           step: '01',
@@ -727,8 +759,14 @@ const content = {
         },
         pitch: {
           step: '04',
-          title: 'Add the pitch and final links',
-          text: 'Add one short pitch link and the best contact for follow-up.',
+          title: 'Upload project media and final links',
+          text: 'Upload the project video here, add any project images, and leave the best contact for follow-up.',
+          ideaTitle: 'Save now and continue later',
+          ideaText:
+            'This path is for idea-stage projects. Save the idea, get the project ID, build the project, and come back later with the video.',
+          buildTitle: 'Upload the project video now',
+          buildText:
+            'Prototype and working projects should upload the video now so the judges can review the real build immediately.',
         },
       },
       teamModes: [
@@ -810,9 +848,11 @@ const content = {
       stages: [
         { id: 'idea', label: 'Idea stage' },
         { id: 'prototype', label: 'Prototype' },
-        { id: 'working', label: 'Working build' },
+        { id: 'working', label: 'Done / working build' },
       ],
       fields: {
+        projectId: 'Project ID',
+        projectStatus: 'Project status',
         fullName: 'Full name',
         age: 'Age',
         applicationOwner: 'Who is submitting this form?',
@@ -829,11 +869,14 @@ const content = {
         category: 'Category',
         problem: 'What problem are you solving?',
         description: 'Project idea',
-        recordingLink: 'Voice or video link (up to 3 minutes)',
+        projectVideo: 'Project video upload',
+        projectImages: 'Project images',
+        projectVideoStatus: 'Video status',
         projectLink: 'Extra project link',
         contact: 'Best contact for updates',
       },
       placeholders: {
+        projectId: 'GYTH-2026-ABC123',
         fullName: 'Your full name',
         age: 'Under 18',
         city: 'Gaza',
@@ -846,7 +889,6 @@ const content = {
         projectName: 'Give your idea a name',
         problem: 'Describe the need or challenge',
         description: 'Explain how the idea works, who it helps, and what makes it exciting.',
-        recordingLink: 'https://...',
         projectLink: 'Prototype, repo, drive, or demo link',
         contact: 'Student email, phone number, or best family contact',
       },
@@ -857,7 +899,14 @@ const content = {
           'Applicants under 13 must be submitted by an adult who is connected to the student.',
         problem: 'Try to describe the real-life issue in one or two simple sentences.',
         description: 'You can explain the build, the user journey, the hardware setup, or what makes your idea different.',
-        recordingLink: 'The recording can be a voice note or a short video link. Keep it personal, short, and clear.',
+        projectVideoRequired:
+          'Upload the real project video here. The file is stored inside this website, not on YouTube or another external platform.',
+        projectVideoIdea:
+          'If the project is still at idea stage, you can save now and come back later with the same project ID to upload the video.',
+        projectVideoReplace:
+          'This project already has a saved video. Upload a new file only if you want to replace it.',
+        projectImages:
+          'Optional: add screenshots, prototype photos, or build photos. Uploading new images replaces the current set.',
         projectLink: 'Optional: add any extra link that helps judges understand the build better.',
         mentorContact:
           'Optional, but helpful if the team has a mentor the organizers may need to reach.',
@@ -867,10 +916,63 @@ const content = {
           'Use the adult contact that organizers should reach for updates, questions, and follow-up.',
       },
       optionalLabel: 'Optional',
-      saveNote: 'Your draft saves automatically on this device while you type.',
+      requiredLabel: 'Required',
+      saveNote:
+        'Your draft saves automatically on this device while you type. After you submit, the project also gets a trackable project ID on the server.',
       missingTitle: 'Still needed before submission',
       readyTitle: 'Ready to submit',
-      readyText: 'All key answers are in place. You can prepare the submission now.',
+      readyText:
+        'All key answers are in place. Save the application now, then keep the project ID for future follow-up uploads.',
+      projectTrackerTitle: 'Continue a project or check its status',
+      projectTrackerText:
+        'Enter the project ID here anytime to reopen the saved application, upload the project video later, or check whether the project is still under review, accepted, or declined.',
+      loadProject: 'Load project',
+      followUpDeadlineLabel: 'Follow-up window',
+      selectedFileLabel: 'Selected file',
+      projectStatusFallback: 'Saved and waiting for organizer review',
+      followUpProjectIdTitle: 'Use the project ID for follow-up',
+      followUpProjectIdText:
+        'After saving this idea-stage application, keep the project ID and use it later to reopen the project and upload the video.',
+      uploadVideoAction: 'Choose project video',
+      replaceVideoAction: 'Replace project video',
+      clearSelectedVideo: 'Clear selected video',
+      uploadVideoEmpty: 'Upload the recorded project video from this device.',
+      savedVideoLabel: 'Currently stored on the website',
+      uploadImagesAction: 'Choose project images',
+      replaceImagesAction: 'Replace project images',
+      clearSelectedImages: 'Clear selected images',
+      uploadImagesEmpty: 'Upload screenshots, prototype images, or build photos from this device.',
+      savedImagesLabel: 'images currently stored on the website',
+      imageLimitNote: 'You can upload up to 6 project images at a time.',
+      videoPolicyTitle: 'Project video is required for prototypes and working builds',
+      videoPolicyText:
+        'Once the project moves beyond idea stage, upload the actual project video here so judges can review the real build directly on the website.',
+      ideaStageUploadTitle: 'Idea-stage projects can upload the video later',
+      ideaStageUploadText:
+        'If this is still an idea, submit now and use the saved project ID to come back within the next 2 to 3 months with the project video and updated images.',
+      ideaStageFollowUpSteps: [
+        'Save the idea first',
+        'Build the project after submission',
+        'Record the project video when the build is ready',
+        'Return with the project ID to upload the video later',
+      ],
+      savedMediaTitle: 'Saved project media',
+      savedMediaText:
+        'These files are already stored on the website for this project. Upload a new file only if you want to replace what is here.',
+      openUploadedVideo: 'Open uploaded video',
+      projectVideoStatuses: {
+        uploaded: 'Uploaded to the website',
+        followUpAllowed: 'Idea stage: video can be added later',
+        requiredNow: 'Video still required before this project can move forward',
+      },
+      projectStatuses: {
+        submitted: 'Submitted',
+        reviewing: 'Reviewing',
+        shortlisted: 'Shortlisted',
+        accepted: 'Accepted',
+        waitlisted: 'Waitlisted',
+        declined: 'Declined',
+      },
       ideaPromptTitle: 'What helps an application stand out',
       ideaPrompts: [
         {
@@ -883,10 +985,12 @@ const content = {
         },
         {
           title: 'Keep the pitch personal',
-          body: 'A short honest voice note or video is stronger than a long perfect script.',
+          body: 'A short honest project video is stronger than a long polished script.',
         },
       ],
-      submit: 'Prepare my submission',
+      submit: 'Save my application',
+      submitIdea: 'Save and get project ID',
+      submitBuild: 'Upload video and save application',
       reset: 'Clear form',
       resultEyebrow: 'Submission summary',
       resultTitle: 'A ready message for the official channel',
@@ -895,8 +999,8 @@ const content = {
       resultNextTitle: 'What to do next',
       resultNextSteps: [
         'Read the summary once and fix anything that still feels unclear.',
-        'Copy it when you are ready to send it through the official event channel.',
-        'Make sure your voice or video link opens correctly for the judges.',
+        'Keep the project ID somewhere safe so the participant can return later.',
+        'If the project is still at idea stage, come back with the same project ID to upload the project video and images.',
       ],
       resultEmpty: 'No submission summary yet. Fill in the form and prepare it here.',
       copy: 'Copy summary',
@@ -909,13 +1013,15 @@ const content = {
         'Student details and the application path are clear',
         'Team setup, category, and project stage are selected',
         'The problem and idea are explained clearly',
-        'A voice or video pitch link and a working contact are attached',
+        'A working contact is attached and the project media plan is clear',
       ],
       summaryTitle: 'Gaza Youth Tech Hackathon Submission',
       missingSchool: 'Not provided',
       missingTeamType: 'Not selected',
       missingApplicationOwner: 'Not selected',
       summaryLabels: {
+        projectId: 'Project ID',
+        projectStatus: 'Project status',
         fullName: 'Full name',
         age: 'Age',
         applicationOwner: 'Application path',
@@ -933,7 +1039,9 @@ const content = {
         category: 'Category',
         problem: 'Problem to solve',
         description: 'Project idea',
-        recordingLink: 'Voice or video link',
+        projectVideoStatus: 'Video status',
+        projectVideo: 'Project video',
+        projectImages: 'Project images',
         projectLink: 'Extra project link',
         contact: 'Best contact for updates',
       },
@@ -948,8 +1056,13 @@ const content = {
       feedback: {
         completeRequired: 'Finish the key required fields before submitting.',
         invalidAge: 'This hackathon is currently designed for participants under 18.',
-        prepared:
-          'Your application was prepared and saved in the dashboard for organizer review.',
+        projectIdNeeded: 'Enter the saved project ID first.',
+        projectLoaded:
+          'The project was loaded from the server. You can now review it or upload more media.',
+        savedIdeaStage:
+          'Your idea-stage application was saved. Keep the project ID and come back later to upload the project video.',
+        savedWithMedia:
+          'Your application and uploaded project media were saved in the dashboard for organizer review.',
         cleared: 'Form cleared.',
       },
     },
@@ -967,7 +1080,7 @@ const content = {
       },
       filtersTitle: 'Filter responses',
       searchLabel: 'Search responses',
-      searchPlaceholder: 'Search by student, project, city, school, or contact',
+      searchPlaceholder: 'Search by project ID, student, project, city, school, or contact',
       allStages: 'All stages',
       queueTitle: 'Response queue',
       queueText: 'Select a response to open the full project story and update its acceptance stage.',
@@ -982,7 +1095,7 @@ const content = {
       projectStageLabel: 'Project stage',
       submittedAt: 'Submitted',
       updatedAt: 'Last updated',
-      openRecording: 'Open pitch link',
+      openRecording: 'Open uploaded video',
       summaryTitle: 'Prepared summary',
       copySummary: 'Copy summary',
       notesTitle: 'Organizer notes',
@@ -1067,13 +1180,13 @@ const content = {
     },
     languageSwitch: {
       en: 'EN',
-      ar: 'عربي',
+      ar: 'AR',
     },
     hero: {
       eyebrow: 'ابتكار شبابي من غزة',
       title: 'ابنِ ما تحتاجه غزة في المرحلة القادمة.',
       text:
-        'هاكاثون مخصص للمبدعين تحت 18 سنة. شارك الفكرة، وأظهر العمل، وأضف رابطًا قصيرًا لصوت أو فيديو.',
+        'هاكاثون مخصص للمبدعين تحت 18 سنة. شارك الفكرة، وأظهر العمل، وارفع وسائط المشروع مباشرة داخل الموقع.',
       primary: 'ابدأ التقديم',
       secondary: 'اكتشف الهاكاثون',
       stats: [
@@ -1090,7 +1203,7 @@ const content = {
       quickList: [
         'قدّم فكرة مشروع أو نموذجًا أوليًا',
         'اشرح المشكلة والحل بشكل واضح',
-        'أرفق رابط تسجيل قصير يدعم قصتك بصوتك',
+        'ارفع وسائط المشروع الآن أو لاحقًا إذا كان المشروع ما زال في مرحلة الفكرة',
       ],
       // Developer note: the image for these cards now lives in `src/config/siteImages.js`.
       mediaCards: [
@@ -1183,10 +1296,10 @@ const content = {
     },
     mediaMoments: {
       eyebrow: 'من أجواء المكان',
-      title: 'لقطات عفوية وردود فعل ومقاطع سريعة من يوم الهاكاثون',
+      title: 'لقطات وردود فعل ومقاطع سريعة من فترة تنفيذ المشاريع',
       body:
-        'ليست كل الذكريات مرتبطة بخطوات المشروع فقط. هذا القسم يوثق الأجواء المحيطة بها: طاقة القاعة، أحاديث المرشدين، ردود الفعل المفاجئة، والمقاطع القصيرة التي تجعل الحدث حيًا في الذاكرة.',
-      notes: ['لقطات الجمهور', 'مقاطع المرشدين', 'لحظات التفاعل', 'فرحة الإنجاز'],
+        'هذا القسم لا يتحدث عن يوم الهاكاثون النهائي، بل عن فترة تنفيذ المشاريع نفسها. هنا تظهر لحظات البناء والتجربة والتصحيح ومتابعة المرشدين وردود الفعل السريعة التي ترافق تحول الفكرة إلى مشروع يعمل.',
+      notes: ['تقدم البناء', 'متابعة المرشدين', 'لحظات التجربة', 'ردود فعل الفريق'],
       loadMoreLabel: 'تحميل المزيد من اللقطات',
       cards: [
         {
@@ -1559,7 +1672,7 @@ const content = {
         'عرّف بنفسك وبالمشروع بوضوح.',
         'اختر المجال الأنسب للفكرة.',
         'اشرح المشكلة والحل ومن سيستفيد.',
-        'أضف رابط تسجيل قصير يروي الفكرة بصوتك.',
+        'ارفع فيديو المشروع أو عد لاحقًا باستخدام رقم المشروع إذا كانت الفكرة ما زالت مبكرة.',
       ],
     },
     judging: {
@@ -1648,7 +1761,8 @@ const content = {
         },
         {
           question: 'ما نوع التسجيل المطلوب؟',
-          answer: 'أرسل رابطًا واحدًا لتسجيل صوتي أو فيديو قصير لا يتجاوز 3 دقائق لتقديم فكرتك ولماذا هي مهمة.',
+          answer:
+            'ارفع فيديو مشروع قصيرًا مباشرة داخل الموقع. وإذا كان المشروع ما زال في مرحلة الفكرة، يمكنك التقديم الآن ثم العودة لاحقًا باستخدام رقم المشروع لإضافة الفيديو.',
         },
       ],
     },
@@ -1656,7 +1770,7 @@ const content = {
       eyebrow: 'جاهز للخطوة التالية؟',
       title: 'افتح صفحة التقديم وابدأ بصياغة مشروعك بشكل أقوى.',
       body:
-        'تجربة التقديم الآن تساعد المشارك على اختيار المجال ومرحلة المشروع وشرح الفكرة وإضافة رابط التسجيل بشكل أوضح.',
+        'تجربة التقديم الآن تساعد المشارك على اختيار المجال ومرحلة المشروع وشرح الفكرة ورفع وسائط المشروع داخل الموقع.',
       button: 'اذهب إلى صفحة التقديم',
     },
     contactHero: {
@@ -1668,7 +1782,7 @@ const content = {
       secondary: 'العودة إلى الرئيسية',
       facts: [
         { label: 'نوع التقديم', value: 'فكرة أو نموذج أولي أو بناء مبكر' },
-        { label: 'دعم العرض', value: 'رابط صوتي أو فيديو حتى 3 دقائق' },
+        { label: 'وسائط المشروع', value: 'رفع مباشر داخل الموقع' },
         { label: 'المستفيد', value: 'الطلاب والأهل والمرشدون' },
       ],
     },
@@ -1710,13 +1824,13 @@ const content = {
         'اسم مشروع واضح وسهل التذكر',
         'شرح بسيط للمشكلة',
         'وصف مختصر لكيفية عمل الفكرة',
-        'رابط تسجيل قصير بصوت شخصي وواثق',
+        'صور للمشروع أو فيديو قصير عندما يصبح البناء جاهزًا',
       ],
       standoutTitle: 'ما الذي يقوّي التقديم؟',
       standout: [
         'بيّن لماذا يهم المشروع الناس من حولك',
         'اجعل الشرح بسيطًا بدلًا من أن يكون تقنيًا أكثر من اللازم',
-        'استخدم التسجيل ليروي القصة بدل أن يكرر ما كُتب في النموذج',
+        'استخدم الوسائط المرفوعة لتُظهر تقدّمًا حقيقيًا بدل تكرار ما كُتب في النموذج',
       ],
       eligibilityTitle: 'نظرة سريعة على الأهلية',
       eligibility: [
@@ -1739,6 +1853,35 @@ const content = {
       back: 'رجوع',
       next: 'متابعة',
       nextStepReady: 'هذه الخطوة جاهزة ويمكنك الانتقال إلى التالية.',
+      stageFlow: {
+        eyebrow: 'ماذا يحدث بعد ذلك',
+        projectIdPending: 'سيتم إنشاء رقم المشروع بعد الحفظ',
+        empty: {
+          title: 'اختر مرحلة المشروع أولًا',
+          text: 'الخطوات التالية تتغير بحسب ما إذا كان المشروع ما زال فكرة أو أصبح نموذجًا أوليًا أو نسخة عاملة.',
+          steps: [],
+        },
+        idea: {
+          title: 'احفظ الفكرة الآن ثم أكمل المشروع لاحقًا',
+          text:
+            'في مرحلة الفكرة يمكن للفريق المتابعة من دون رفع فيديو الآن. بعد الحفظ سيحصل على رقم مشروع للعودة لاحقًا مع فيديو المشروع النهائي.',
+          steps: [
+            'انتقل إلى القسم التالي من دون رفع فيديو',
+            'ابنِ المشروع بعد حفظ الطلب',
+            'سجّل فيديو المشروع لاحقًا ثم ارجع برقم المشروع نفسه',
+          ],
+        },
+        build: {
+          title: 'ارفع فيديو المشروع ضمن هذا الطلب',
+          text:
+            'المشاريع التي وصلت إلى نموذج أولي أو نسخة عاملة يجب أن تكمل عبر مسار رفع الفيديو حتى يرى الحكام البناء الحالي مباشرة.',
+          steps: [
+            'انتقل إلى القسم التالي',
+            'ارفع فيديو المشروع الحقيقي هناك',
+            'احفظ الطلب واحتفظ برقم المشروع لأي متابعة لاحقة',
+          ],
+        },
+      },
       sections: {
         basics: {
           step: '01',
@@ -1757,8 +1900,14 @@ const content = {
         },
         pitch: {
           step: '04',
-          title: 'أضف العرض القصير والروابط',
-          text: 'أضف رابط العرض القصير وأفضل وسيلة تواصل للمتابعة.',
+          title: 'ارفع وسائط المشروع والروابط النهائية',
+          text: 'ارفع فيديو المشروع هنا، وأضف صور المشروع إن وجدت، واترك أفضل وسيلة تواصل للمتابعة.',
+          ideaTitle: 'احفظ الآن وأكمل لاحقًا',
+          ideaText:
+            'هذا المسار مخصص لمشاريع مرحلة الفكرة. احفظ الفكرة، واحصل على رقم المشروع، وابنِ المشروع، ثم ارجع لاحقًا مع الفيديو.',
+          buildTitle: 'ارفع فيديو المشروع الآن',
+          buildText:
+            'المشاريع التي وصلت إلى نموذج أولي أو نسخة عاملة يجب أن ترفع الفيديو الآن حتى يتمكن الحكام من مراجعة البناء الحقيقي مباشرة.',
         },
       },
       teamModes: [
@@ -1840,9 +1989,11 @@ const content = {
       stages: [
         { id: 'idea', label: 'مرحلة الفكرة' },
         { id: 'prototype', label: 'نموذج أولي' },
-        { id: 'working', label: 'نسخة تعمل' },
+        { id: 'working', label: 'مكتمل / نسخة تعمل' },
       ],
       fields: {
+        projectId: 'رقم المشروع',
+        projectStatus: 'حالة المشروع',
         fullName: 'الاسم الكامل',
         age: 'العمر',
         applicationOwner: 'من الذي يقدّم هذا النموذج؟',
@@ -1859,11 +2010,14 @@ const content = {
         category: 'المجال',
         problem: 'ما المشكلة التي تحاول حلها؟',
         description: 'فكرة المشروع',
-        recordingLink: 'رابط الصوت أو الفيديو (حتى 3 دقائق)',
+        projectVideo: 'رفع فيديو المشروع',
+        projectImages: 'صور المشروع',
+        projectVideoStatus: 'حالة الفيديو',
         projectLink: 'رابط إضافي للمشروع',
         contact: 'أفضل وسيلة تواصل للمتابعة',
       },
       placeholders: {
+        projectId: 'GYTH-2026-ABC123',
         fullName: 'اكتب اسمك الكامل',
         age: 'أقل من 18',
         city: 'غزة',
@@ -1876,7 +2030,6 @@ const content = {
         projectName: 'أعطِ فكرتك اسمًا',
         problem: 'صف الحاجة أو التحدي',
         description: 'اشرح كيف تعمل الفكرة، ومن تساعد، ولماذا هي مميزة.',
-        recordingLink: 'https://...',
         projectLink: 'رابط نموذج أو مستودع أو عرض أو ملفات',
         contact: 'إيميل الطالب أو رقم الهاتف أو أفضل وسيلة تواصل عائلية',
       },
@@ -1887,7 +2040,14 @@ const content = {
           'الطالب دون 13 سنة يجب أن يقدّم له شخص بالغ مرتبط به ويمكن التواصل معه.',
         problem: 'حاول وصف المشكلة الواقعية في جملة أو جملتين بسيطتين.',
         description: 'يمكنك شرح البناء أو الرحلة أو العتاد أو ما الذي يجعل فكرتك مختلفة.',
-        recordingLink: 'يمكن أن يكون التسجيل صوتيًا أو فيديو قصيرًا. اجعله شخصيًا وواضحًا ومباشرًا.',
+        projectVideoRequired:
+          'ارفع فيديو المشروع الحقيقي هنا. يتم تخزين الملف داخل هذا الموقع، وليس على يوتيوب أو أي منصة خارجية.',
+        projectVideoIdea:
+          'إذا كان المشروع ما زال في مرحلة الفكرة، يمكنك الحفظ الآن ثم العودة لاحقًا برقم المشروع نفسه لرفع الفيديو.',
+        projectVideoReplace:
+          'يوجد فيديو محفوظ لهذا المشروع بالفعل. ارفع ملفًا جديدًا فقط إذا كنت تريد استبداله.',
+        projectImages:
+          'اختياري: أضف لقطات شاشة أو صورًا للنموذج أو صورًا من رحلة البناء. رفع صور جديدة سيستبدل الصور الحالية.',
         projectLink: 'اختياري: أضف أي رابط إضافي يساعد الحكام على فهم المشروع بشكل أفضل.',
         mentorContact:
           'اختياري، لكنه مفيد إذا كان لدى الفريق مرشد قد يحتاج المنظمون إلى التواصل معه.',
@@ -1897,10 +2057,63 @@ const content = {
           'استخدم وسيلة تواصل الشخص البالغ الذي يجب أن يصل إليه فريق التنظيم عند المتابعة.',
       },
       optionalLabel: 'اختياري',
-      saveNote: 'يتم حفظ المسودة تلقائيًا على هذا الجهاز أثناء الكتابة.',
+      requiredLabel: 'مطلوب',
+      saveNote:
+        'يتم حفظ المسودة تلقائيًا على هذا الجهاز أثناء الكتابة. وبعد الإرسال يحصل المشروع أيضًا على رقم متابعة محفوظ على الخادم.',
       missingTitle: 'ما الذي ما زال مطلوبًا قبل التقديم',
       readyTitle: 'جاهز للتقديم',
-      readyText: 'كل الإجابات الأساسية موجودة. يمكنك الآن تجهيز الطلب وإرساله.',
+      readyText:
+        'كل الإجابات الأساسية موجودة. احفظ الطلب الآن واحتفظ برقم المشروع للعودة ورفع الملفات لاحقًا عند الحاجة.',
+      projectTrackerTitle: 'متابعة المشروع أو التحقق من حالته',
+      projectTrackerText:
+        'أدخل رقم المشروع هنا في أي وقت لإعادة فتح الطلب المحفوظ، أو رفع فيديو المشروع لاحقًا، أو معرفة ما إذا كان المشروع ما زال قيد المراجعة أو تم قبوله أو رفضه.',
+      loadProject: 'تحميل المشروع',
+      followUpDeadlineLabel: 'فترة المتابعة',
+      selectedFileLabel: 'الملف المختار',
+      projectStatusFallback: 'محفوظ وبانتظار مراجعة فريق التنظيم',
+      followUpProjectIdTitle: 'استخدم رقم المشروع للمتابعة لاحقًا',
+      followUpProjectIdText:
+        'بعد حفظ هذا الطلب في مرحلة الفكرة، احتفظ برقم المشروع واستخدمه لاحقًا لإعادة فتح المشروع ورفع الفيديو.',
+      uploadVideoAction: 'اختر فيديو المشروع',
+      replaceVideoAction: 'استبدل فيديو المشروع',
+      clearSelectedVideo: 'امسح الفيديو المختار',
+      uploadVideoEmpty: 'ارفع فيديو المشروع المسجل من هذا الجهاز.',
+      savedVideoLabel: 'المحفوظ حاليًا داخل الموقع',
+      uploadImagesAction: 'اختر صور المشروع',
+      replaceImagesAction: 'استبدل صور المشروع',
+      clearSelectedImages: 'امسح الصور المختارة',
+      uploadImagesEmpty: 'ارفع لقطات شاشة أو صور النموذج أو صورًا من رحلة البناء من هذا الجهاز.',
+      savedImagesLabel: 'صور محفوظة حاليًا داخل الموقع',
+      imageLimitNote: 'يمكنك رفع حتى 6 صور للمشروع في كل مرة.',
+      videoPolicyTitle: 'فيديو المشروع مطلوب للنموذج الأولي أو النسخة العاملة',
+      videoPolicyText:
+        'بمجرد انتقال المشروع إلى ما بعد مرحلة الفكرة، يجب رفع فيديو المشروع الحقيقي هنا حتى يتمكن الحكام من مراجعة البناء مباشرة من داخل الموقع.',
+      ideaStageUploadTitle: 'مشاريع مرحلة الفكرة يمكنها رفع الفيديو لاحقًا',
+      ideaStageUploadText:
+        'إذا كان هذا المشروع ما زال فكرة فقط، أرسل الطلب الآن ثم استخدم رقم المشروع للعودة خلال الشهرين إلى الثلاثة أشهر القادمة مع فيديو المشروع وصوره المحدثة.',
+      ideaStageFollowUpSteps: [
+        'احفظ الفكرة أولًا',
+        'ابنِ المشروع بعد إرسال الطلب',
+        'سجّل فيديو المشروع عندما يصبح البناء جاهزًا',
+        'ارجع برقم المشروع لرفع الفيديو لاحقًا',
+      ],
+      savedMediaTitle: 'وسائط المشروع المحفوظة',
+      savedMediaText:
+        'هذه الملفات محفوظة بالفعل داخل الموقع لهذا المشروع. ارفع ملفًا جديدًا فقط إذا كنت تريد استبدال الموجود.',
+      openUploadedVideo: 'افتح الفيديو المرفوع',
+      projectVideoStatuses: {
+        uploaded: 'مرفوع داخل الموقع',
+        followUpAllowed: 'مرحلة الفكرة: يمكن إضافة الفيديو لاحقًا',
+        requiredNow: 'الفيديو ما زال مطلوبًا قبل أن يتقدم المشروع',
+      },
+      projectStatuses: {
+        submitted: 'تم الإرسال',
+        reviewing: 'قيد المراجعة',
+        shortlisted: 'قائمة مختصرة',
+        accepted: 'مقبول',
+        waitlisted: 'قائمة انتظار',
+        declined: 'غير مختار',
+      },
       ideaPromptTitle: 'ما الذي يجعل التقديم أقوى',
       ideaPrompts: [
         {
@@ -1913,10 +2126,12 @@ const content = {
         },
         {
           title: 'اجعل العرض شخصيًا',
-          body: 'تسجيل قصير وصادق بصوتك أو فيديوك أفضل من نص طويل يبدو رسميًا أكثر من اللازم.',
+          body: 'فيديو مشروع قصير وصادق أفضل من نص طويل يبدو رسميًا أكثر من اللازم.',
         },
       ],
-      submit: 'جهّز طلبي',
+      submit: 'احفظ طلبي',
+      submitIdea: 'احفظ واحصل على رقم المشروع',
+      submitBuild: 'ارفع الفيديو واحفظ الطلب',
       reset: 'مسح النموذج',
       resultEyebrow: 'ملخص التقديم',
       resultTitle: 'رسالة جاهزة للقناة الرسمية',
@@ -1925,8 +2140,8 @@ const content = {
       resultNextTitle: 'ماذا بعد؟',
       resultNextSteps: [
         'اقرأ الملخص مرة واحدة وعدّل أي نقطة ما زالت غير واضحة.',
-        'انسخه عندما تصبح جاهزًا لإرساله عبر القناة الرسمية للحدث.',
-        'تأكد أن رابط الصوت أو الفيديو يعمل بشكل صحيح للحكام.',
+        'احتفظ برقم المشروع في مكان آمن حتى يتمكن المشارك من العودة لاحقًا.',
+        'إذا كان المشروع ما زال في مرحلة الفكرة، ارجع برقم المشروع نفسه لرفع فيديو المشروع وصوره.',
       ],
       resultEmpty: 'لا يوجد ملخص بعد. املأ النموذج وجهّزه هنا.',
       copy: 'نسخ الملخص',
@@ -1939,13 +2154,15 @@ const content = {
         'بيانات الطالب ومسار التقديم واضحان',
         'تم تحديد الفريق والمجال ومرحلة المشروع',
         'المشكلة والفكرة مشروحتان بوضوح',
-        'تم إرفاق رابط العرض ووسيلة تواصل مناسبة',
+        'تمت إضافة وسيلة تواصل واضحة وخطة وسائط مناسبة للمشروع',
       ],
       summaryTitle: 'تقديم هاكاثون غزة للتكنولوجيا للشباب',
       missingSchool: 'غير مذكور',
       missingTeamType: 'غير محدد',
       missingApplicationOwner: 'غير محدد',
       summaryLabels: {
+        projectId: 'رقم المشروع',
+        projectStatus: 'حالة المشروع',
         fullName: 'الاسم الكامل',
         age: 'العمر',
         applicationOwner: 'مسار التقديم',
@@ -1963,7 +2180,9 @@ const content = {
         category: 'المجال',
         problem: 'المشكلة التي يحاول حلها',
         description: 'فكرة المشروع',
-        recordingLink: 'رابط الصوت أو الفيديو',
+        projectVideoStatus: 'حالة الفيديو',
+        projectVideo: 'فيديو المشروع',
+        projectImages: 'صور المشروع',
         projectLink: 'رابط إضافي للمشروع',
         contact: 'أفضل وسيلة تواصل للمتابعة',
       },
@@ -1978,8 +2197,13 @@ const content = {
       feedback: {
         completeRequired: 'أكمل الحقول الأساسية المطلوبة قبل إرسال الطلب.',
         invalidAge: 'هذا الهاكاثون مخصص حاليًا للمشاركين تحت 18 سنة.',
-        prepared:
-          'تم تجهيز الطلب وحفظه في لوحة المتابعة لمراجعته من قبل فريق التنظيم.',
+        projectIdNeeded: 'أدخل رقم المشروع المحفوظ أولًا.',
+        projectLoaded:
+          'تم تحميل المشروع من الخادم. يمكنك الآن مراجعته أو رفع وسائط إضافية.',
+        savedIdeaStage:
+          'تم حفظ طلب مرحلة الفكرة. احتفظ برقم المشروع وارجع لاحقًا لرفع فيديو المشروع.',
+        savedWithMedia:
+          'تم حفظ الطلب ووسائط المشروع المرفوعة في لوحة المتابعة لمراجعتها من قبل فريق التنظيم.',
         cleared: 'تم مسح النموذج.',
       },
     },
@@ -1997,7 +2221,7 @@ const content = {
       },
       filtersTitle: 'فلترة الطلبات',
       searchLabel: 'ابحث في الردود',
-      searchPlaceholder: 'ابحث بالاسم أو المشروع أو المدينة أو المدرسة أو وسيلة التواصل',
+      searchPlaceholder: 'ابحث برقم المشروع أو الاسم أو المشروع أو المدينة أو المدرسة أو وسيلة التواصل',
       allStages: 'كل المراحل',
       queueTitle: 'قائمة الردود',
       queueText: 'اختر أي رد لقراءة تفاصيل المشروع كاملة وتحديث مرحلة قبوله.',
@@ -2011,7 +2235,7 @@ const content = {
       projectStageLabel: 'مرحلة المشروع',
       submittedAt: 'تاريخ التقديم',
       updatedAt: 'آخر تحديث',
-      openRecording: 'افتح رابط العرض',
+      openRecording: 'افتح الفيديو المرفوع',
       summaryTitle: 'الملخص الجاهز',
       copySummary: 'نسخ الملخص',
       notesTitle: 'ملاحظات المنظمين',
@@ -2202,6 +2426,19 @@ function App() {
           />
         ) : route.page === 'dashboard' ? (
           <DashboardPage content={pageContent} language={language} onNavigate={handleNavigate} />
+        ) : route.page === 'accepted' ? (
+          <AcceptedProjectsPage
+            content={pageContent}
+            language={language}
+            onNavigate={handleNavigate}
+            onOpenVideo={setActiveVideoItem}
+          />
+        ) : route.page === 'tracker' ? (
+          <ProjectTrackerPage
+            content={pageContent}
+            language={language}
+            onNavigate={handleNavigate}
+          />
         ) : (
           <ContactPage
             content={pageContent}

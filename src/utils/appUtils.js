@@ -102,6 +102,25 @@ export function getAdditionalTeamMembers(formState, formContent) {
   return members
 }
 
+export function getProjectVideoStatusKey(submission) {
+  if (submission?.projectVideo?.url || submission?.projectVideo?.path) {
+    return 'uploaded'
+  }
+
+  return submission?.projectStage === 'idea' ? 'followUpAllowed' : 'requiredNow'
+}
+
+export function getProjectVideoStatusLabel(statusKey, formContent) {
+  const normalizedKey =
+    statusKey === 'follow_up_allowed'
+      ? 'followUpAllowed'
+      : statusKey === 'required_now'
+        ? 'requiredNow'
+        : statusKey
+
+  return formContent.projectVideoStatuses?.[normalizedKey] || normalizedKey
+}
+
 export function buildSubmissionSummary(formState, formContent, categoriesById, stagesById) {
   const teamModesById = Object.fromEntries(
     (formContent.teamModes || []).map((item) => [item.id, item.label]),
@@ -110,10 +129,17 @@ export function buildSubmissionSummary(formState, formContent, categoriesById, s
   const applicationOwner = ageDetails.isUnder13 ? 'adult' : formState.applicationOwner
   const applicationOwnerLabel = getApplicationOwnerLabel(applicationOwner, formContent)
   const additionalTeamMembers = getAdditionalTeamMembers(formState, formContent)
-
+  const projectVideoStatusKey =
+    formState.projectVideoStatus || getProjectVideoStatusKey(formState)
   const lines = [
     formContent.summaryTitle,
     '',
+    `${formContent.summaryLabels.projectId}: ${
+      formState.projectId || formState.submissionId || formContent.snapshotEmpty
+    }`,
+    `${formContent.summaryLabels.projectStatus}: ${
+      formContent.projectStatuses?.[formState.reviewStage] || formContent.projectStatusFallback
+    }`,
     `${formContent.summaryLabels.fullName}: ${formState.fullName}`,
     `${formContent.summaryLabels.age}: ${formState.age}`,
     `${formContent.summaryLabels.city}: ${formState.city}`,
@@ -170,11 +196,22 @@ export function buildSubmissionSummary(formState, formContent, categoriesById, s
     `${formContent.summaryLabels.description}:`,
     formState.description,
     '',
-    `${formContent.summaryLabels.recordingLink}: ${formState.recordingLink}`,
+    `${formContent.summaryLabels.projectVideoStatus}: ${getProjectVideoStatusLabel(
+      projectVideoStatusKey,
+      formContent,
+    )}`,
   )
 
   if (isFilled(formState.projectLink)) {
     lines.push(`${formContent.summaryLabels.projectLink}: ${formState.projectLink}`)
+  }
+
+  if (formState.projectVideo?.url) {
+    lines.push(`${formContent.summaryLabels.projectVideo}: ${formState.projectVideo.url}`)
+  }
+
+  if (formState.projectImages?.length) {
+    lines.push(`${formContent.summaryLabels.projectImages}: ${formState.projectImages.length}`)
   }
 
   lines.push(`${formContent.summaryLabels.contact}: ${formState.contact}`)
@@ -209,7 +246,9 @@ export function parseHash() {
   const [page, section = ''] = rawHash.split(':')
 
   return {
-    page: ['home', 'contact', 'dashboard'].includes(page) ? page : 'home',
+    page: ['home', 'contact', 'dashboard', 'tracker', 'accepted'].includes(page)
+      ? page
+      : 'home',
     section,
   }
 }

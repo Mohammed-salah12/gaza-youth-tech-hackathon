@@ -5,6 +5,8 @@ import {
   getAdditionalTeamMembers,
   getAgeDetails,
   getApplicationOwnerLabel,
+  getProjectVideoStatusKey,
+  getProjectVideoStatusLabel,
 } from '../../utils/appUtils'
 import {
   createAdmin,
@@ -238,6 +240,7 @@ export default function DashboardPage({ content, language, onNavigate }) {
       }
 
       return [
+        submission.projectId,
         submission.fullName,
         submission.projectName,
         submission.city,
@@ -282,6 +285,12 @@ export default function DashboardPage({ content, language, onNavigate }) {
   const selectedAdditionalTeamMembers = selectedSubmission
     ? getAdditionalTeamMembers(selectedSubmission, content.form)
     : []
+  const selectedProjectVideoStatusLabel = selectedSubmission
+    ? getProjectVideoStatusLabel(
+        selectedSubmission.projectVideoStatus || getProjectVideoStatusKey(selectedSubmission),
+        content.form,
+      )
+    : ''
 
   useEffect(() => {
     setNotesDraft(selectedSubmission?.organizerNotes || '')
@@ -634,6 +643,7 @@ export default function DashboardPage({ content, language, onNavigate }) {
                       </div>
                       <p>{submission.fullName}</p>
                       <div className="queue-item__meta">
+                        <span>{submission.projectId || '—'}</span>
                         <span>{submission.city}</span>
                         <span>{categoriesById[submission.category] || submission.category}</span>
                       </div>
@@ -676,6 +686,10 @@ export default function DashboardPage({ content, language, onNavigate }) {
 
                   <div className="dashboard-meta-grid">
                     <div className="dashboard-meta-item">
+                      <span>{content.form.summaryLabels.projectId}</span>
+                      <strong>{selectedSubmission.projectId || '—'}</strong>
+                    </div>
+                    <div className="dashboard-meta-item">
                       <span>{content.form.summaryLabels.category}</span>
                       <strong>
                         {categoriesById[selectedSubmission.category] || selectedSubmission.category}
@@ -699,6 +713,10 @@ export default function DashboardPage({ content, language, onNavigate }) {
                       <strong>
                         {formatSubmissionDate(selectedSubmission.updatedAt, language)}
                       </strong>
+                    </div>
+                    <div className="dashboard-meta-item">
+                      <span>{content.form.fields.projectVideoStatus}</span>
+                      <strong>{selectedProjectVideoStatusLabel}</strong>
                     </div>
                   </div>
 
@@ -822,16 +840,52 @@ export default function DashboardPage({ content, language, onNavigate }) {
                         </div>
                       </div>
                     ) : null}
-                    <div className="result-actions">
-                      <a
-                        className="secondary-button"
-                        href={selectedSubmission.recordingLink}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {content.dashboard.openRecording}
-                      </a>
-                    </div>
+                    {selectedSubmission.projectVideo?.url || selectedSubmission.projectImages?.length ? (
+                      <div className="dashboard-upload-block">
+                        <div className="response-block">
+                          <h3>{content.form.fields.projectVideo}</h3>
+                          {selectedSubmission.projectVideo?.url ? (
+                            <div className="dashboard-upload-preview">
+                              <video controls preload="metadata" src={selectedSubmission.projectVideo.url} />
+                              <a
+                                className="secondary-button"
+                                href={selectedSubmission.projectVideo.url}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                {content.dashboard.openRecording}
+                              </a>
+                            </div>
+                          ) : (
+                            <p>{selectedProjectVideoStatusLabel}</p>
+                          )}
+                        </div>
+
+                        {selectedSubmission.projectImages?.length ? (
+                          <div className="response-block">
+                            <h3>{content.form.fields.projectImages}</h3>
+                            <div className="dashboard-upload-gallery">
+                              {selectedSubmission.projectImages.map((image) => (
+                                <a
+                                  key={image.url}
+                                  href={image.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="dashboard-upload-gallery__item"
+                                >
+                                  <img src={image.url} alt={image.originalName || selectedSubmission.projectName} />
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="response-block">
+                        <h3>{content.form.fields.projectVideo}</h3>
+                        <p>{selectedProjectVideoStatusLabel}</p>
+                      </div>
+                    )}
                   </article>
 
                   <article className="dashboard-panel">
